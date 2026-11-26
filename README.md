@@ -33,7 +33,7 @@ To share it, open a pull request against this repo. Once it's merged it shows up
 
 ## Imports
 
-Modules import each other by relative path only (`./panels.js`, `./kit/gauge.js`). There are no bare names and no import map. An import that leaves the dash's folder is refused, with the reason. The app's own modules change with every release; a dash that leaned on them would change or break with it, which is why a starter carries its own copy of everything it uses.
+Modules import each other by relative path only (`./units.js`, `./parts/gauge.js`). There are no bare names and no import map. An import that leaves the dash's folder is refused, with the reason. The app's own modules change with every release; a dash that leaned on them would change or break with it, which is why a starter carries its own copy of everything it uses.
 
 **Fonts** are the one thing the app gives every dash: `Oxanium` 600 and 700, `Saira` 600 and 700, `"Saira VF"` (variable weight and width), and `"Barlow Condensed"` 500 and 700, sent to the frame shortly after it starts. Use them by name in your CSS; text drawn on a canvas should be redrawn on `api.on('fonts', fn)`, which fires once they are in.
 
@@ -76,15 +76,15 @@ my-dash/
 | `api.setUnit(kind, key)` | Ask the app to change a display unit (ours: a two-finger tap on a box). Kinds and keys: `pressure` (`kpa`, `bar`, `psi`), `temperature` (`c`, `f`), `speed` (`kmh`, `mph`), `mixture` (`lambda`, `afr`). The app checks it against its own table and answers with a `units` event. |
 | `api.bridge` | The chosen Bridge's name. |
 | `api.params` | Launch parameters from a test address (see Try it), `{ name: text }`, or `null`. A dash reads its own; ours reads `left`, `right`, `full`, `level`, `theme`, and `auto` (`start.js`). |
-| `api.history` | With feed `history`: the phone's recent readings, for the kit's `hist.restore`. `null` without the feed. |
-| `api.on('reading', (v, t, m) => ...)` | Every reading: `v` in base units (kPa, °C, km/h, lambda), `t` its time in ms. `m.dim` is true while readings are late; `m.smoothMs`, how long a needle should take to ease to a new value; `m.digitsHz`, how often a number may change, or `null` for the kit's default. |
+| `api.history` | With feed `history`: the phone's recent readings, so a chart can start full: `{ rings, peak, marks, clock }`, a ring per channel (`f:rpm`, `s:oil_temp_c`, ...: `{ a, i, len }`, `a` the values with `i` the next slot), fast channels 25 times a second for 30 s, slow ones once a second for 15 minutes, `NaN` for no reading. `null` without the feed. |
+| `api.on('reading', (v, t, m) => ...)` | Every reading: `v` in base units (kPa, °C, km/h, lambda), `t` its time in ms. `m.dim` is true while readings are late; `m.smoothMs`, how long a needle should take to ease to a new value; `m.digitsHz`, how often a number may change, or `null` when the app sets none. |
 | `api.on('rows', (m) => ...)` | With feed `rows`: `{ rows, reset, end }`, the live chart's new rows since the last, oldest first, at most every 100 ms. `reset: true` means drop what you have and start from these. `end` is the app's playback clock (ms): the chart's right edge. A row: `{ t, rpm, map_kpa, ... }`, `t` an ISO time. |
 | `api.on('trend', (rows) => ...)` | With feed `trend`: the 2-hour trend, the whole list each time (when it changes, and every 30 s), oldest first. A row: `{ t, ect_c, iat_c, oil_temp_c, ... }`, `t` an ISO time. |
 | `api.on('fonts', fn)` | The app's fonts have arrived: redraw anything drawn on a canvas. |
 | `api.nav.shown`, `api.on('nav', (shown) => ...)` | Whether the app's tab bar is up, and when that changes. |
 | `api.nav.show()`, `api.nav.hide()` | Bring the app's tab bar up, or put it away. You pick the gestures (ours: the first tap hides it). While it is hidden the app draws a small handle over your dash, on the edge the bar hid behind (bottom centre upright, right centre sideways, about 96 by 28 px), that brings it back; keep that spot clear. After `show()` the app hides it again after a few seconds. |
 | `api.on('outside', fn)` | A press in the app outside your frame (the tab bar), or the Car tab left: close a menu you opened. |
-| `api.request('trend', { name: 'trends', body: { minutes, fields } })` | Stored history, a promise: `{ rows }` for the last `minutes` (1 to 1440) of up to 13 channels, or with `{ name: 'trend_days', body: { key, lo, hi } }` 30 days of one channel by day, `{ today, days }`. Read-only. The kit's `trend_data.js` does this for you (`setTrendSource`, as ours does in `index.js`). |
+| `api.request('trend', { name: 'trends', body: { minutes, fields } })` | Stored history, a promise: `{ rows }` for the last `minutes` (1 to 1440) of up to 13 channels, or with `{ name: 'trend_days', body: { key, lo, hi } }` 30 days of one channel by day, `{ today, days }`. Read-only. |
 | `api.store.get(k)`, `api.store.set(k, v)` | A small store kept on the phone for this dash: plain JSON values, up to 64 keys (names up to 40 characters) and 16 KB in all; `set(k, undefined)` removes a key. Treat what you read back as untrusted (check its type) so your dash always starts. It belongs to this exact set of files: a new version of an installed dash starts with a fresh store and settings. |
 
 Reading keys: `rpm`, `map_kpa`, `tps_pct`, `ect_c`, `iat_c`, `lambda1`, `lambda2`, `lambda_target`, `battery_v`, `oil_kpa`, `fuel_kpa`, `ign_deg`, `oil_temp_c`, and from the phone `speed_kmh`, `g_lat`, `g_long`, `tilt_x`, `tilt_y`, and `run` (the acceleration timers). A value the car doesn't have is `null` or missing.

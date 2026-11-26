@@ -8,17 +8,16 @@
 // one to begin; not listed).
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, dirname, posix } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { checkManifest } from './manifest.js';
 import { scanImports } from './imports.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const LIMITS = { files: 64, bytes: 1_500_000 };   // the app's (src/js/dash/loader.js LIMITS)
 const BUILTIN = ['tunerloop-dash', 'shift-light'];  // ids the app's own dashes have: a package can't
-const CHECK = process.argv.includes('--check');
 
 // A dash folder's files as the app takes them: dash.json, .js and .css, by path in the folder.
-function readFolder(dir, prefix = '', out = {}) {
+export function readFolder(dir, prefix = '', out = {}) {
   for (const name of readdirSync(dir).sort()) {
     if (name.startsWith('.') || name === 'node_modules' || name === 'dash.bundle.json') continue;
     const path = prefix + name, full = join(dir, name);
@@ -28,8 +27,8 @@ function readFolder(dir, prefix = '', out = {}) {
   return out;
 }
 
-// What is wrong with a dash's files, as a list (empty: the app will take it).
-function problems(files) {
+// What is wrong with a dash's files, as a list (empty: the app will take it). Pure.
+export function problems(files) {
   const out = [];
   const paths = Object.keys(files);
   if (paths.length > LIMITS.files) out.push(`${paths.length} files: a dash has at most ${LIMITS.files}`);
@@ -60,26 +59,31 @@ function problems(files) {
 
 const dashDirs = (top) => (existsSync(join(ROOT, top)) ? readdirSync(join(ROOT, top)).sort().map((n) => `${top}/${n}`)
   .filter((d) => existsSync(join(ROOT, d, 'dash.json'))) : []);
-const write = (path, text, stale) => {
+const write = (path, text, stale, check) => {
   const full = join(ROOT, path);
   const now = existsSync(full) ? readFileSync(full, 'utf8') : null;
   if (now === text) return;
-  if (CHECK) stale.push(path); else writeFileSync(full, text);
+  if (check) stale.push(path); else writeFileSync(full, text);
 };
 
-let bad = 0;
-const stale = [], listed = [], ids = new Map();
-for (const dir of [...dashDirs('dashes'), ...dashDirs('starters')]) {
-  const files = readFolder(join(ROOT, dir));
-  const p = problems(files);
-  const m = p.length ? null : checkManifest(JSON.parse(files['dash.json'])).manifest;
-  if (m && ids.has(m.id)) p.push(`id '${m.id}' is also ${ids.get(m.id)}'s`);
-  if (m) ids.set(m.id, dir);
-  if (p.length) { bad++; console.log(`✕ ${dir}\n${p.map((x) => `    ${x}`).join('\n')}`); continue; }
-  write(`${dir}/dash.bundle.json`, `${JSON.stringify({ files })}\n`, stale);
-  if (dir.startsWith('dashes/')) listed.push({ dir, id: m.id, name: m.name, version: m.version, author: m.author, description: m.description });
-  console.log(`✓ ${dir}: ${m.name} ${m.version}, ${Object.keys(files).length} files`);
+// Check and pack every dash here (check: write nothing, report what is out of date). Returns the exit code.
+export function pack(check) {
+  let bad = 0;
+  const stale = [], listed = [], ids = new Map();
+  for (const dir of [...dashDirs('dashes'), ...dashDirs('starters')]) {
+    const files = readFolder(join(ROOT, dir));
+    const p = problems(files);
+    const m = p.length ? null : checkManifest(JSON.parse(files['dash.json'])).manifest;
+    if (m && ids.has(m.id)) p.push(`id '${m.id}' is also ${ids.get(m.id)}'s`);
+    if (m) ids.set(m.id, dir);
+    if (p.length) { bad++; console.log(`✕ ${dir}\n${p.map((x) => `    ${x}`).join('\n')}`); continue; }
+    write(`${dir}/dash.bundle.json`, `${JSON.stringify({ files })}\n`, stale, check);
+    if (dir.startsWith('dashes/')) listed.push({ dir, id: m.id, name: m.name, version: m.version, author: m.author, description: m.description });
+    console.log(`✓ ${dir}: ${m.name} ${m.version}, ${Object.keys(files).length} files`);
+  }
+  write('index.json', `${JSON.stringify({ dashes: listed }, null, 2)}\n`, stale, check);
+  if (stale.length) console.log(`out of date (run node tools/pack.mjs and commit): ${stale.join(', ')}`);
+  return bad || stale.length ? 1 : 0;
 }
-write('index.json', `${JSON.stringify({ dashes: listed }, null, 2)}\n`, stale);
-if (stale.length) console.log(`out of date (run node tools/pack.mjs and commit): ${stale.join(', ')}`);
-process.exit(bad || stale.length ? 1 : 0);
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) process.exit(pack(process.argv.includes('--check')));
