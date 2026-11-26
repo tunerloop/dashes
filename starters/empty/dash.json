@@ -1,0 +1,12 @@
+{
+  "id": "my-dash",
+  "name": "My dash",
+  "version": "1.0.0",
+  "api": 1,
+  "author": "",
+  "license": "MIT",
+  "description": "What it shows, in one line.",
+  "entry": "index.js",
+  "settings": {},
+  "feeds": []
+}

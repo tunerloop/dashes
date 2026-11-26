@@ -1,0 +1,12 @@
+{
+  "dashes": [
+    {
+      "dir": "dashes/big-numbers",
+      "id": "big-numbers",
+      "name": "Big numbers",
+      "version": "1.0.0",
+      "author": "TunerLoop",
+      "description": "Four readings you pick, as big as the screen allows, in your units. Tap to hide or show the tab bar."
+    }
+  ]
+}

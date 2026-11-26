@@ -1,0 +1,18 @@
+{
+  "id": "big-numbers",
+  "name": "Big numbers",
+  "version": "1.0.0",
+  "api": 1,
+  "author": "TunerLoop",
+  "license": "MIT",
+  "description": "Four readings you pick, as big as the screen allows, in your units. Tap to hide or show the tab bar.",
+  "entry": "index.js",
+  "styles": ["big-numbers.css"],
+  "settings": {
+    "a": { "type": "channel", "label": "First", "default": "rpm" },
+    "b": { "type": "channel", "label": "Second", "default": "oil_temp_c" },
+    "c": { "type": "channel", "label": "Third", "default": "oil_kpa" },
+    "d": { "type": "channel", "label": "Fourth", "default": "lambda1" }
+  },
+  "feeds": []
+}
