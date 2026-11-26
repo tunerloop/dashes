@@ -18,6 +18,6 @@ After every change:
 2. Commit the source and the bundles together, and push.
 3. Tell the person to open the Car tab again (or reload the app): with this folder set as the dev source in Settings, it runs the new commit.
 
-If you change `tools/pack.mjs`, run its tests: `node --test tools/`.
+If you change `tools/pack.mjs`, run its tests: `node --test tools/pack.test.mjs`.
 
 Never edit `dash.bundle.json`, `index.json`, `tools/manifest.js`, or `tools/imports.js` by hand.

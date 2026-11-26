@@ -1,4 +1,4 @@
-// The pack tool's checks (node --test tools/): what the app would refuse is caught here first.
+// The pack tool's checks (node --test tools/pack.test.mjs): what the app would refuse is caught here first.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { problems, readFolder } from './pack.mjs';
