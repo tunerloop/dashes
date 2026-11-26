@@ -1,0 +1,47 @@
+/* The TunerLoop dash's layout (index.js, panels.js): two panels filling the Car tab, stacked when
+   upright and side by side sideways, the full screen layer over them, a box's pages and the groove
+   between two sliding pages, the dots, and the long-press menu. Theme colours and type: the kit's
+   themes.css; the boxes' own styles: the kit's boxes.css. */
+.dash { position: absolute; inset: 0; background: #000; }   /* the whole Car tab is ours: the gaps between the panels too */
+.panels { display: grid; grid-template-rows: 1fr 1fr; gap: 9px; height: 100%; transition: opacity 0.4s; }
+.dash[data-mode="dim"] .panels { opacity: 0.35; }
+@media (orientation: landscape) { .panels { grid-template-rows: 1fr; grid-template-columns: 1fr 1fr; } }
+.dots { position: absolute; left: 0; right: 0; bottom: 6px; display: flex; justify-content: center; gap: 6px; pointer-events: none; transition: opacity 0.3s; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--d-label); opacity: 0.4; }
+.dots i.on { opacity: 1; }
+
+/* ---------------------------------------------------------------- pages (pages.js): what a panel or full screen shows */
+.page { position: absolute; inset: 0; will-change: transform; }
+.page[hidden] { display: none; }
+.page canvas.detail, .canvas-box canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.page canvas.under { position: absolute; left: 0; right: 0; top: 50%; width: 100%; height: 50%; display: block; }   /* full screen held upright: the chart under the box */
+.page canvas.under[hidden] { display: none; }
+.box.half { bottom: 50%; }
+/* The full screen layer over the panels (panels.js): one panel's full screen page */
+.panel.dash-full { position: absolute; inset: 0; z-index: 3; will-change: transform; }
+.panel.dash-full[hidden] { display: none; }
+.dash[data-mode="dim"] .dash-full { opacity: 0.35; }
+.dash.sliding { overflow: hidden; }   /* the panels grid and the layer sliding past each other */
+.panels { will-change: transform; }
+/* The dots and the page's name show while a page moves (panels.js flashDots), then fade. */
+.lvdots, .lvname, .dots { opacity: 0; transition: opacity 0.4s; }
+.panel.dots-on :is(.lvname, .dots), .pagedots.dots-on .lvdots { opacity: 1; transition: opacity 0.1s; }
+/* A panel's page dots, over where the panel sits and outside everything that slides (panels.js pageDots) */
+.pagedots { position: absolute; z-index: 4; pointer-events: none; }
+.pagedots[hidden] { display: none; }
+.dash[data-mode="dim"] .pagedots { opacity: 0.35; }
+/* Between two pages while they slide: a groove with the name of the page coming in */
+.pagesep { position: fixed; top: 0; left: 0; height: 30px; z-index: 6; pointer-events: none; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(#000, #111 45%, #0a0a0a); border-top: 1px solid rgba(255, 255, 255, 0.07); border-bottom: 1px solid rgba(0, 0, 0, 0.9);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.8); will-change: transform; }
+.pagesep[hidden] { display: none; }
+.pagesep span { color: var(--d-label); font: 600 11px/1 var(--d-font); letter-spacing: 0.14em; text-transform: uppercase; }
+.lvdots { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 2; pointer-events: none; }
+.lvdots i { width: 7px; height: 7px; border-radius: 50%; background: var(--d-label); opacity: 0.35; }
+.lvdots i.on { opacity: 1; background: var(--d-value); }
+.lvname { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 2; pointer-events: none; color: var(--d-label); font: 600 12px/1 var(--d-font); letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ---------------------------------------------------------------- the long-press menu: every box, filling the panel */
+.jump { position: absolute; inset: 0; z-index: 4; display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 1fr; gap: 1.5cqmin; padding: 1.5cqmin; box-sizing: border-box; background: rgba(0, 0, 0, 0.92); }
+.jump button { margin: 0; padding: 0 1cqmin; min-width: 0; min-height: 0; border: 1px solid var(--d-grid); border-radius: 2cqmin; background: var(--d-track); color: var(--d-value); font: 600 clamp(14px, 5cqmin, 24px)/1.1 var(--d-font); }
+.jump button.on { background: var(--d-value); color: var(--d-face); border-color: var(--d-value); }

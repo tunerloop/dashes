@@ -1,0 +1,193 @@
+/* kit/boxes.css: the app's kit/boxes.css (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change. */
+/* The kit's boxes: the type scale, a panel as a size container, and each box's own styles (the dial,
+   the big number, the Lambda Twin, the phone boxes, the grid of numbers, the charts). Colours and
+   fonts: themes.css. */
+/* The type scale: five sizes every box uses, from the panel's size. kit.js typeScale() gives the canvas
+   views the same steps, and the Screens page's Type & colour panel shows them all.
+     lbl   labels, units beside small numbers, axis text (caps, 600, letter-spaced)
+     small grid values, the unit beside a hero number, rates
+     value secondary numbers (Pull cells, G now, stats)
+     big   two numbers stacked (the Lambda Twin)
+     hero  the one main number (big boxes, Speed, Pull RPM, Oil)
+   Numbers are 700 and tabular; the dial draws its own text in dial units, so it scales with the dial.
+   The rule: big is the least for any number meant to be read at a glance while driving; value
+   and small are for detail read parked (full screen history, labels). */
+/* From the panel's shorter side, so a square panel and full screen either way up use the same sizes. */
+.panel { --t-lbl: clamp(11px, 3.6cqmin, 16px); --t-small: 7cqmin; --t-value: 11cqmin; --t-big: 17cqmin; --t-hero: 28cqmin; }
+.panel { position: relative; min-height: 0; background: var(--d-face); border-radius: 14px; overflow: hidden; container-type: size; }
+.slot { position: absolute; inset: 0; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.box { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; box-sizing: border-box; will-change: transform; }
+.box[hidden] { display: none; }
+
+/* ---------------------------------------------------------------- dial */
+.gauge svg { width: 100%; height: 100%; padding: 3%; box-sizing: border-box; font-family: var(--d-font); overflow: visible; }   /* the 3D bezel reaches past the viewBox edge; the padding holds it */
+.gauge .face { fill: var(--d-face); }
+.gauge .ring { fill: none; stroke: var(--d-ring); stroke-width: 3; }
+.gauge .tk { stroke: var(--d-tick); stroke-width: 2.6; }
+.gauge .tm { stroke: var(--d-tick); stroke-width: 1.1; opacity: 0.7; stroke-dasharray: 7 99; }   /* 7 of its 12 (gauge.js) */
+.gauge .num { fill: var(--d-num); font-size: 15px; font-weight: var(--d-num-weight); font-style: var(--d-value-style); text-anchor: middle; dominant-baseline: central; }
+.gauge .lbl { fill: var(--d-label); font-size: 11px; font-weight: 600; text-anchor: middle; letter-spacing: 0.1em; text-transform: uppercase; }
+.gauge .note { fill: var(--d-label); font-size: 8.5px; text-anchor: middle; letter-spacing: 0.05em; }
+.gauge .val { fill: var(--d-value); font-size: 22px; font-weight: 700; font-style: var(--d-value-style); text-anchor: middle; font-variant-numeric: tabular-nums; }
+.gauge .val.end { text-anchor: end; }
+.gauge .lcd { display: none; }
+/* Vintage: the dial's digital readout in an orange LCD window, like the mph window in a classic VDO tach; recessed in 3D */
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .lcd { display: inline; fill: var(--d-lcd-bg); stroke: #0b0503; stroke-width: 1.4; }
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .val, .dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .vu { fill: var(--d-lcd); }
+.dash[data-theme="vintage3d"] .gauge .lcd { fill: url(#d3-lcd); stroke: url(#d3-lcdedge); stroke-width: 1.6; }
+.dash[data-theme="vintage3d"] .gauge .val { filter: url(#d3-glow); }
+.gauge .vu { fill: var(--d-label); font-size: 11px; font-weight: 600; text-anchor: start; font-family: var(--d-font); }
+.gauge .zone { fill: none; stroke-width: 7; }
+.gauge .zone.red { stroke: var(--d-red); }
+.gauge .zone.warn { stroke: var(--d-warn); }
+.gauge .zone.cold { stroke: var(--d-cold); }
+.gauge .needle path { fill: var(--d-needle); }
+.gauge .hub { fill: var(--d-hub); stroke: var(--d-needle); stroke-width: 1.5; }
+.gauge[data-zone="red"] .val .v { fill: var(--d-red); }
+.gauge[data-zone="warn"] .val .v { fill: var(--d-warn); }
+
+/* ---------------------------------------------------------------- big number with its icon */
+.big { flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 2cqmin; padding: 4cqmin 4cqmin 6cqmin; font-family: var(--d-font); }   /* name top left, the value, its last minute along the bottom */
+.big-v { flex: none; text-align: center; color: var(--d-value); font-size: var(--t-hero); line-height: 0.9; font-weight: 700; font-style: var(--d-value-style); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.big-v .v, .grid .n .v { display: inline-block; min-width: calc(var(--w, 3) * 1ch); text-align: right; }   /* fixed width: the unit never moves */
+.big-v .u { font-size: var(--t-small); color: var(--d-label); margin-left: 1.5cqmin; font-weight: 600; }
+.big-win { flex: 1; min-height: 0; position: relative; }
+.big-graph { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.big-win2 { display: none; }
+@container (max-aspect-ratio: 5/7) { .big-win2 { display: block; } }   /* upright full screen: two near-square charts, not one tall one */
+.big-dial { display: none; }
+/* Vintage 3D, a channel with a VDO dial (gauge.js makeBig): the dial alone in a panel; in full screen
+   the dial beside (sideways) or over (upright) its last minute and last 15 minutes, each in a window
+   recessed into the panel like the tach's LCD. */
+.dash[data-theme="vintage3d"] .big.has-dial { display: grid; gap: 3cqmin; padding: 0; grid-template: "dial" 1fr / 1fr; }
+.dash[data-theme="vintage3d"] .big.has-dial > :is(.big-k, .big-v, .big-win) { display: none; }
+.dash[data-theme="vintage3d"] .big-dial { display: flex; position: relative; inset: auto; grid-area: dial; min-width: 0; min-height: 0; }
+@container (min-aspect-ratio: 7/5) {
+  .dash[data-theme="vintage3d"] .big.has-dial { grid-template: "dial w1" 1fr "dial w2" 1fr / 100cqh 1fr; padding-right: 4cqmin; padding-block: 4cqmin; }
+  .dash[data-theme="vintage3d"] .big.has-dial .big-dial { margin-block: -4cqmin; }
+}
+@container (max-aspect-ratio: 5/7) {
+  .dash[data-theme="vintage3d"] .big.has-dial { grid-template: "dial" 100cqw "w1" 1fr "w2" 1fr / 1fr; padding-inline: 4cqmin; padding-bottom: 4cqmin; }
+  .dash[data-theme="vintage3d"] .big.has-dial .big-dial { margin-inline: -4cqmin; }
+}
+@container (min-aspect-ratio: 7/5) or (max-aspect-ratio: 5/7) {
+  .dash[data-theme="vintage3d"] .big.has-dial > .big-win { display: block; grid-area: w1; }
+  .dash[data-theme="vintage3d"] .big.has-dial > .big-win2 { grid-area: w2; }
+}
+/* A dial box's graphs page (gauge.js makeGlance): three numbers over its last 15 minutes, one window */
+.glance { padding: 4cqmin; }
+.glance-win { position: relative; width: 100%; height: 100%; }
+.glance-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* In the Vintage styles it is an amber LCD like the dials' readout: a dark orange window with rounded
+   corners, recessed, the line in LCD orange with a soft glow and an orange fill under it
+   (the canvas reads these, kit.js themeOf). */
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .glance-win {
+  --d-chart-line: var(--d-lcd); --d-chart-fill: var(--d-lcd); --d-chart-fill-alpha: 0.3; --d-chart-bg: transparent; --d-chart-glow: 6;
+  --d-label: rgba(255, 106, 31, 0.75); --d-grid: rgba(255, 106, 31, 0.16); --d-value: #ffd2b0;
+  --d-chart-num: #fff1e4; --d-chart-tag-ink: #1a0904;   /* warm white numbers over the chart; dark ink on the orange Now tag */
+  background: linear-gradient(#150703, #2a120a 35%, #32170c); border-radius: 3cqmin; border: 1px solid #0b0503; }
+.dash[data-theme="vintage3d"] .glance-win { box-shadow: inset 0 1cqmin 2.5cqmin rgba(0, 0, 0, 0.75), 0 1px 0 rgba(255, 255, 255, 0.12); }
+.dash[data-theme="vintage3d"] .big-win { border-radius: 2.4cqmin; background: rgba(0, 0, 0, 0.22); }
+.dash[data-theme="vintage3d"] .big-win::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 0.8cqmin 2cqmin rgba(0, 0, 0, 0.8), inset 0 -1px 0 rgba(255, 255, 255, 0.07);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 40%); }
+.big-k { flex: none; display: flex; align-items: center; gap: 1.5cqmin; color: var(--d-label); font-size: var(--t-lbl); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+.ico { width: 7cqmin; height: 7cqmin; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.big[data-zone="red"] .big-v .v, .grid [data-zone="red"] .v { color: var(--d-red); }
+.big[data-zone="warn"] .big-v .v, .grid [data-zone="warn"] .v { color: var(--d-warn); }
+
+/* ---------------------------------------------------------------- Lambda Twin (twin.js) */
+.twin { flex-direction: column; align-items: stretch; justify-content: space-between; gap: 2cqmin; padding: 6cqmin 6cqmin 7cqmin; font-family: var(--d-font); }
+.tw-head { display: flex; justify-content: space-between; align-items: baseline; color: var(--d-label); font-size: var(--t-lbl); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+.tw-split { color: var(--d-warn); font-weight: 700; }
+.tw-row { display: grid; grid-template-columns: 36% 1fr; grid-template-rows: auto auto; column-gap: 4cqmin; align-items: center; }
+.tw-k { grid-column: 1 / -1; color: var(--d-label); font-size: var(--t-lbl); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.tw-row + .tw-row .tw-k { color: var(--d-b2); }
+.tw-n { color: var(--d-value); font-size: var(--t-big); line-height: 1; font-weight: 700; font-style: var(--d-value-style); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.tw-bar { position: relative; height: 14cqh; border-radius: 99px; background: var(--d-track); }
+.tw-bar::after { content: ""; position: absolute; left: calc(50% - 1px); top: -3cqh; bottom: -3cqh; width: 2px; background: var(--d-value); }
+.tw-band { position: absolute; top: 0; bottom: 0; left: var(--tw-band-l); width: var(--tw-band-w); background: color-mix(in srgb, var(--d-ok) 16%, transparent); }
+.tw-fill { position: absolute; top: 0; bottom: 0; left: 50%; width: 0; border-radius: 4px; background: var(--d-ok); }
+.tw-tick { position: absolute; top: -2cqh; bottom: -2cqh; width: 4px; margin-left: -2px; background: var(--d-value); border-radius: 2px; }
+.tw-cut { display: none; position: absolute; inset: 0 0 0 50%; align-items: center; justify-content: center; color: var(--d-label); font-size: var(--t-lbl); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  background: repeating-linear-gradient(-45deg, transparent 0 5px, var(--d-grid) 5px 8px); border-radius: 0 99px 99px 0; }
+.tw-row[data-st="cut"] .tw-cut { display: flex; }
+.tw-row[data-st="cut"] .tw-n { color: var(--d-label); }
+.tw-row[data-st="rich"] .tw-n { color: var(--d-rich); } .tw-row[data-st="rich"] .tw-fill { background: var(--d-rich); }
+.tw-row[data-st="lean"] .tw-n { color: var(--d-lean); } .tw-row[data-st="lean"] .tw-fill { background: var(--d-lean); }
+.tw-row[data-st="danger"] .tw-n { color: var(--d-red); } .tw-row[data-st="danger"] .tw-fill { background: var(--d-red); }
+.tw-scale { display: grid; grid-template-columns: 36% 1fr 1fr 1fr 1fr; column-gap: 4cqmin; color: var(--d-label); font-size: var(--t-lbl); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.tw-scale span:first-child { grid-column: 2; } .tw-scale span:nth-child(2) { text-align: right; } .tw-scale span:nth-child(3) { text-align: left; } .tw-scale span:last-child { text-align: right; }
+.tw-scale .rich { color: var(--d-rich); } .tw-scale .lean { color: var(--d-lean); }
+
+/* ---------------------------------------------------------------- phone boxes (phone_boxes.js) and automatic modes */
+/* Speed: a window sized for three digits (it never grows, 8 or 128), the unit small inside it, then
+   the accelerating/braking bar and its reading. In the Vintage styles the window is an orange LCD. */
+.speed { flex-direction: column; align-items: stretch; justify-content: center; gap: 4cqh; padding: 6cqmin; font-family: var(--d-font); }
+.speed .sp-k { position: absolute; left: 6cqmin; top: 5cqmin; color: var(--d-label); font-size: var(--t-lbl); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+.speed .sp-lcd { display: flex; align-items: baseline; justify-content: center; gap: 2cqmin; padding: 2cqh 4cqmin; border-radius: 2cqmin; color: var(--d-value); }
+.speed .sp-lcd .v { width: 3ch; text-align: right; font-size: min(var(--t-hero), calc((80cqw - var(--t-lbl) * 2) / 1.7));   /* never wider than the window on a narrow phone */ line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
+.speed .sp-lcd .u { width: 3.2ch; white-space: nowrap; font-size: var(--t-small); font-weight: 600; color: var(--d-label); }
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .speed .sp-lcd { color: var(--d-lcd); background: var(--d-lcd-bg); box-shadow: inset 0 0 0 0.6cqmin #0b0503; }
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .speed .sp-lcd .u { color: var(--d-lcd); }
+.speed .sp-row { display: flex; justify-content: space-between; align-items: baseline; color: var(--d-label); font-size: var(--t-lbl); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.speed .sp-row .sp-g { color: var(--d-value); font-size: var(--t-small); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.speed .sp-row .br { color: var(--d-red); } .speed .sp-row .ac { color: var(--d-ok); }
+.speed .sp-bar { position: relative; width: 100%; height: 6cqh; border-radius: 99px; background: var(--d-track); }
+.speed .sp-bar::after { content: ""; position: absolute; left: calc(50% - 1px); top: -1cqh; bottom: -1cqh; width: 2px; background: var(--d-value); }
+.speed .sp-bar i { position: absolute; top: 0; bottom: 0; left: 50%; width: 0; border-radius: 4px; background: var(--d-ok); }
+.speed .sp-bar i[data-dir="brake"] { background: var(--d-red); }
+.gmeter canvas { position: absolute; inset: 4cqmin; width: calc(100% - 8cqmin); height: calc(100% - 8cqmin); }
+.gmeter .gm-read { position: absolute; left: 5cqmin; bottom: 4cqmin; color: var(--d-value); font: 700 var(--t-value)/1 var(--d-font); font-variant-numeric: tabular-nums; }
+.gmeter .gm-k { color: var(--d-label); font-size: var(--t-lbl); margin-left: 1cqmin; }
+/* Pull view (Hard acceleration): a rev bar across the top, the RPM as the hero, then speed, the timer
+   and the leanest mixture in three equal cells, so the whole panel works. */
+.pull { flex-direction: column; align-items: stretch; justify-content: space-between; gap: 3cqh; padding: 9cqmin 6cqmin 6cqmin; font-family: var(--d-font); }
+.pull .pl-bar { height: 7cqh; border-radius: 99px; background: var(--d-track); overflow: hidden; }
+.pull .pl-bar i { display: block; height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--d-value) 0 62%, var(--d-warn) 62% 84%, var(--d-red) 84%); background-size: 100cqw 100%; }
+.pull .pl-rpm { text-align: center; }
+.pull .pl-rpm .v { color: var(--d-value); font-size: var(--t-hero); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.pull .pl-rpm .u { color: var(--d-label); font-size: var(--t-small); margin-left: 1.5cqmin; }
+.pull[data-shift="1"] .pl-rpm .v { color: var(--d-red); }
+.pull .pl-cells { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3cqmin; }
+.pull .pl-k { color: var(--d-label); font-size: var(--t-lbl); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+.pull .pl-n { color: var(--d-value); font-size: var(--t-value); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; white-space: nowrap; }
+.pull .fx3 { display: inline-block; min-width: 3ch; text-align: right; }
+.pull .pl-rpm .v { display: inline-block; min-width: 4ch; text-align: right; }
+.pull .pl-t { min-width: 4ch; }
+.pull .pl-n small { font-size: var(--t-lbl); color: var(--d-label); margin-left: 1cqmin; font-weight: 600; }
+.pull[data-timing="1"] .pl-t, .pull[data-timing="1"] .pl-tn { color: var(--d-warn); }
+.pull .pl-lean[data-st="warn"] { color: var(--d-warn); } .pull .pl-lean[data-st="red"] { color: var(--d-red); }
+
+.dash .alarm { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; }
+
+/* ---------------------------------------------------------------- every number */
+.grid { display: grid; align-items: stretch; justify-content: stretch; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 1fr; font-family: var(--d-font); }
+.grid .cell { border: solid var(--d-grid); border-width: 0 1px 1px 0; display: flex; flex-direction: column; justify-content: center; padding: 0 3cqmin; min-height: 0; }
+.grid .k { text-align: center; color: var(--d-label); font-size: var(--t-lbl); line-height: 1.15; white-space: nowrap; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }   /* one row: long names use their short form (channels.js short) */
+.grid .n { display: flex; justify-content: flex-end; align-items: baseline; color: var(--d-value); font-size: var(--t-small); line-height: 1.05; font-weight: 700; font-style: var(--d-value-style); font-variant-numeric: tabular-nums; }
+.grid .u { color: var(--d-label); font-size: var(--t-lbl); margin-left: 1cqmin; font-weight: 600; min-width: calc(var(--uw, 0) * 0.62em); text-align: left; }
+.grid .n .v { min-width: 0; }
+
+/* ---------------------------------------------------------------- charts */
+.chart-box { flex-direction: column; align-items: stretch; padding: 8px 8px 20px; font-family: var(--d-font); }
+.chart-head { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; font-size: var(--t-lbl); color: var(--d-label); padding: 0 4px 4px; }
+.chart-title { color: var(--d-value); font-weight: 700; margin-right: 4px; }
+.chart-head .sw { display: inline-block; width: 12px; height: 3px; margin-right: 4px; vertical-align: middle; border-radius: 2px; }
+.sw-rpm { background: var(--d-s-rpm); } .sw-tps { background: var(--d-s-tps); } .sw-map { background: var(--d-s-map); }
+.sw-ect { background: var(--d-s-ect); } .sw-iat { background: var(--d-s-iat); } .sw-oil { background: var(--d-s-oil); }
+.chart-plots { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.chart-plot { flex: 1; min-height: 0; position: relative; }
+.chart-plot + .chart-plot { display: none; }
+@container (max-aspect-ratio: 5/7) { .chart-plot + .chart-plot { display: block; } }
+.chart-plot .uplot { position: absolute; inset: 0; }
+/* The mouse over a chart (charts.js hoverTip): a line at that moment and a label with its time and values */
+.chart-hair { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--d-label); pointer-events: none; }
+.chart-tip { position: absolute; top: 4px; display: flex; flex-direction: column; gap: 2px; padding: 6px 10px; border-radius: 8px; background: rgba(0, 0, 0, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.35); color: #fff; font-size: 14px; line-height: 1.3; white-space: nowrap; pointer-events: none; font-variant-numeric: tabular-nums; z-index: 2; }
+.chart-tip-t { color: rgba(255, 255, 255, 0.75); font-weight: 600; }
+.chart-tip .sw { display: inline-block; width: 12px; height: 3px; margin-right: 6px; vertical-align: middle; border-radius: 2px; }
+/* The same over a canvas chart (canvas_tip.js): placed on the page, since a canvas holds no elements */
+.canvas-hair, .canvas-tip { position: fixed; z-index: 20; }
+.canvas-hair { bottom: auto; }
+.canvas-tip b { font-weight: 700; }

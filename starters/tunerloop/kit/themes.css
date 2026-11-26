@@ -1,0 +1,118 @@
+/* kit/themes.css: the app's kit/themes.css (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change. */
+/* The kit's themes: the dash fonts, each gauge style's colours and type (--d-* on .dash[data-theme]),
+   and the alarm banner's look. The boxes, numbers and charts draw only with these variables, so a new
+   theme is one block here plus a line in the dash's THEMES (dashes/tunerloop-dash/box_list.js). The app
+   loads this file too (the action buttons' banner, js/feedback.js); a dash's frame gets it without the
+   @font-face rules (the fonts go to a frame as bytes: js/dash/loader.js). */
+/* Oxanium (SIL Open Font License, fonts/oxanium-OFL.txt), from @fontsource/oxanium 5.3.0: the Vintage styles' type.
+   Boxy and racy, and its 1 has a flag and a foot, so digits held in equal-width slots (nothing bounces) don't leave gaps. */
+
+
+/* Saira (SIL Open Font License, fonts/saira-OFL.txt), from @fontsource/saira 5.2.10: the Vintage
+   theme's numerals, the closest open match to classic VDO gauge type. */
+
+
+/* Saira variable (weight and width axes; same OFL), from @fontsource-variable/saira 5.3.0: the dial
+   numerals at full width, wide and heavy like the VDO faces' print. */
+
+/* Barlow Condensed (SIL Open Font License, fonts/barlow-condensed-OFL.txt), from @fontsource/barlow-condensed 5.2.6:
+   the Race theme's type (Vintage falls back to it), bundled so every phone draws the same. */
+
+
+
+/* What the boxes assume of the page around them, the same in the app and in a dash's frame. */
+.dash { font: 19.8px/1.4 system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif; word-wrap: break-word; }
+
+/* ---------------------------------------------------------------- themes */
+.dash {
+  --d-face: #141416; --d-ring: #2c2c31; --d-tick: #c9c9cf; --d-num: #e6e6ea; --d-label: #8d8d96;
+  --d-needle: #ff6a2a; --d-hub: #26262a; --d-value: #ffffff; --d-warn: #f0b429; --d-red: #e5484d; --d-cold: #4aa8ff;
+  --d-grid: rgba(255, 255, 255, 0.08); --d-ok: #5fe3a1; --d-b2: #c6a3ff; --d-rich: #4aa8ff; --d-lean: #ff8a3d; --d-track: rgba(255, 255, 255, 0.07);
+  --d-s-rpm: #ff6a2a; --d-s-tps: #4fa3e0; --d-s-map: #8fd18f; --d-s-ect: #ff6a2a; --d-s-iat: #4fa3e0; --d-s-oil: #c9a227;
+  --d-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --d-num-weight: 600; --d-value-style: normal;
+}
+/* Vintage: classic VDO instruments (964-era): charcoal faces, white numerals in a wide rounded
+   type, white ticks, a long Porsche-orange needle on a plain black hub, the redline as orange
+   marks, and speed in orange on a dark LCD. */
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) {
+  --d-face: #171717; --d-ring: #050505; --d-tick: #f2f2f0; --d-num: #f2f2f0; --d-label: #cfcfcc;
+  --d-needle: #ff6a1a; --d-hub: #0c0c0c; --d-value: #f2f2f0; --d-warn: #ff8c2e; --d-red: #e8402a;
+  --d-grid: rgba(242, 242, 240, 0.1); --d-ok: #8fd18f; --d-b2: #7fb3d9; --d-rich: #7fb3d9; --d-lean: #ff8c2e; --d-track: rgba(242, 242, 240, 0.08);
+  --d-s-rpm: #ff6a1a; --d-s-tps: #f2f2f0; --d-s-map: #ff8c2e; --d-s-ect: #ff6a1a; --d-s-iat: #f2f2f0; --d-s-oil: #ff8c2e;
+  --d-lcd: #ff6a1f; --d-lcd-bg: #2b140b; --d-cold: #e8c33a;   /* warm-up ticks: VDO yellow */
+  --d-font: Oxanium, Saira, "Barlow Condensed", "Arial Narrow", sans-serif;
+  --d-num-weight: 700;
+}
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .ring { stroke-width: 7; }
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .tk { stroke-width: 3.4; }
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .num { font-family: "Saira VF", Oxanium, sans-serif; font-weight: 700; font-stretch: 125%; font-variation-settings: "wdth" 125; }
+/* the traced VDO digits (js/vdo-digits.js) where a dial has them, the font elsewhere */
+.gauge .numg { display: none; fill: var(--d-num); fill-rule: evenodd; }
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .has-vdo .numg { display: inline; }
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .has-vdo .num { display: none; }
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .tm { stroke-width: 1.5; opacity: 0.9; stroke-dasharray: 9.5 99; }
+/* Vintage, like the VDO faces: long and short ticks closer in length than the other styles (13 and 9.5), and the
+   redline as orange ticks, no arc */
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .tk { stroke-dasharray: 13 99; }
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .zone { display: none; }
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .hot { stroke: var(--d-needle); }
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .cold { stroke: var(--d-cold); }   /* still warming up: yellow ticks */
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .zone { stroke-width: 4; }
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .zone.red, .dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .zone.warn { stroke: var(--d-needle); }
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .hub { stroke: none; r: 13px; }
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .lbl { letter-spacing: 0.04em; text-transform: none; font-weight: 600; }
+.gauge .lbl, .gauge .note { transform: translateY(56px); }
+/* Vintage: the name and the note under it ("RPM" over "x1000") small and the same size, one line apart */
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .lbl { font-size: 7.5px; transform: translateY(59.5px); }
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .gauge .note { font-size: 7.5px; }   /* under the hub, clear of the needle */   /* under the hub, like "1/min x1000" on the VDO tach */
+/* Race: a white-faced racing tach: black numerals, red needle, heavy type. */
+.dash[data-theme="race"] {
+  --d-face: #f3f1ea; --d-ring: #111111; --d-tick: #111111; --d-num: #111111; --d-label: #5b5b5b;
+  --d-needle: #d7261e; --d-hub: #111111; --d-value: #111111; --d-warn: #c98a00; --d-red: #d7261e;
+  --d-grid: rgba(0, 0, 0, 0.1); --d-ok: #2e7a47; --d-b2: #6a3fb0; --d-rich: #1f5fae; --d-lean: #c25a00; --d-track: rgba(0, 0, 0, 0.08);
+  --d-s-rpm: #d7261e; --d-s-tps: #1f5fae; --d-s-map: #2e7a47; --d-s-ect: #d7261e; --d-s-iat: #1f5fae; --d-s-oil: #8a6d00;
+  --d-font: "Barlow Condensed", "Arial Narrow", sans-serif; --d-num-weight: 700; --d-value-style: italic;
+}
+
+/* Vintage 3D: the same look with subtle depth and light from the upper left. Dials get a recessed face,
+   a lit bezel, a beveled needle casting a soft shadow, a domed cap and faint glass (shared SVG
+   gradients and filters, #d3-*, kit/d3defs.js, put in once by the dash); panels are recessed, bars sit in inset
+   tracks with a slight highlight, numbers have a faint printed shadow and the LCD digits glow. */
+.dash[data-theme="vintage3d"] { --d-needle-lit: #ff9a55; --d-needle-dark: #b8440c; --d-num: #e4e2dc; --d-tick: #e4e2dc; --d-label: #c4c2bc; }   /* print white, warm and a touch grey like the real faces */
+.dash[data-theme="vintage3d"] .panel { background: radial-gradient(120% 95% at 28% 18%, #1f1f1f, #141414 60%, #0c0c0c);
+  box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.8), inset 0 -1px 0 rgba(255, 255, 255, 0.05); }
+.dash[data-theme="vintage3d"] .gauge .face { fill: url(#d3-face); }
+.dash[data-theme="vintage3d"] .gauge .ring { stroke: url(#d3-bezel); stroke-width: 8; }
+.dash[data-theme="vintage3d"] .gauge .lip { display: inline; }
+.dash[data-theme="vintage3d"] .gauge .glass, .dash[data-theme="vintage3d"] .gauge .rim { display: inline; }
+.dash[data-theme="vintage3d"] .gauge .nwrap { filter: url(#d3-shadow); }
+.dash[data-theme="vintage3d"] .gauge .needle .nl { fill: var(--d-needle-lit); }
+.dash[data-theme="vintage3d"] .gauge .needle .nr { fill: var(--d-needle-dark); }
+.dash[data-theme="vintage3d"] .gauge .needle.flip .nl { fill: var(--d-needle-dark); }
+.dash[data-theme="vintage3d"] .gauge .needle.flip .nr { fill: var(--d-needle-lit); }
+.dash[data-theme="vintage3d"] .gauge .hub { fill: url(#d3-cap); }
+.dash[data-theme="vintage3d"] .gauge .print { filter: url(#d3-print); }
+.dash[data-theme="vintage3d"] .big-v, .dash[data-theme="vintage3d"] .tw-n, .dash[data-theme="vintage3d"] .pull .pl-rpm .v, .dash[data-theme="vintage3d"] .grid .n {
+  text-shadow: 0 2px 2px rgba(0, 0, 0, 0.85), 0 -1px 0 rgba(255, 255, 255, 0.07); }
+.dash[data-theme="vintage3d"] .speed .sp-lcd { text-shadow: 0 0 0.35em rgba(255, 106, 31, 0.45);
+  box-shadow: inset 0 0 0 0.6cqmin #0b0503, inset 0 2cqmin 3cqmin rgba(0, 0, 0, 0.6); }
+.dash[data-theme="vintage3d"] .tw-bar, .dash[data-theme="vintage3d"] .speed .sp-bar { box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.06); }
+.dash[data-theme="vintage3d"] .tw-fill, .dash[data-theme="vintage3d"] .speed .sp-bar i { box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.28), inset 0 -3px 4px rgba(0, 0, 0, 0.35), 0 0 8px color-mix(in srgb, currentColor 0%, transparent); }
+.dash[data-theme="vintage3d"] .tw-tick, .dash[data-theme="vintage3d"] .tw-bar::after { box-shadow: 1px 2px 3px rgba(0, 0, 0, 0.7); }
+.dash[data-theme="vintage3d"] .chart-plot { border-radius: 8px; box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.75); background: rgba(0, 0, 0, 0.18); }
+.dash[data-theme="vintage3d"] .chart-plot::after { content: ""; position: absolute; inset: 0; border-radius: 8px; pointer-events: none;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 40%); }
+.dash[data-theme="vintage3d"] .grid .cell { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03); }
+.dash[data-theme="vintage3d"] .alarm { box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.25), inset 0 -4px 8px rgba(0, 0, 0, 0.3), 0 -6px 24px rgba(0, 0, 0, 0.5); }
+.dash[data-theme="vintage3d"] .gauge .bare { display: none; }   /* the real tach prints no 0 or 8 */
+.gauge .lip, .gauge .glass, .gauge .rim { display: none; }
+.gauge .lip { fill: none; stroke: #000; stroke-width: 12; transform: translate(var(--d3-lx, -3px), var(--d3-ly, -4px)); }
+.gauge .glass { fill: url(#d3-glass); pointer-events: none; }
+.gauge .rim { fill: none; stroke: rgba(255, 255, 255, 0.16); stroke-width: 2.6; filter: url(#d3-glare); transform: rotate(var(--d3-turn, 0deg)); }   /* the glass's reflected arc: soft, not a drawn line */
+.d3-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* ---------------------------------------------------------------- the alarm banner (alarm_banner.js) */
+.alarm { margin: 0; border: 0; border-radius: 14px; padding: 0.35em 0.6em; cursor: pointer;
+  font: 700 clamp(20px, 5.5vmin, 42px) / 1.1 var(--d-font, system-ui, sans-serif); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.02em; text-transform: uppercase; text-align: center; color: #fff; background: var(--d-red, #e5484d); box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.5); }
+.alarm[data-sev="warn"] { font-size: clamp(16px, 4.2vmin, 30px); color: #111; background: var(--d-warn, #f0b429); }
+.alarm[data-sev="ok"] { font-size: clamp(16px, 4.2vmin, 30px); color: #c9f2d5; background: #1f5130; }   /* the status checklist's green */

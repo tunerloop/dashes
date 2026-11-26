@@ -13,7 +13,9 @@ In the app: **Settings, Car tab dash, More dashes**, then **Add**. The Car tab r
 ## Make one with Claude Code
 
 1. **Fork this repo** on GitHub (it must stay public: the app reads it without signing in to GitHub), and clone your fork.
-2. **Start from a starter.** Copy `starters/empty/` (two files, the smallest dash there is) or any dash under `dashes/` into `dashes/` under a new name.
+2. **Start from a starter.** Copy one into `dashes/` under a new name:
+   - `starters/tunerloop/`: a complete copy of the app's own dash, kit included (about 40 files). Best when you want ours with changes ("call oil temp OEL", "my redline is 7200", "add a boost gauge").
+   - `starters/empty/`: two files, the smallest dash there is. Best for something new. Any dash under `dashes/` works as a start too.
 3. **Give it its own `id` and `name`** in its `dash.json`.
 4. **Open the repo in Claude Code** and say what you want. `CLAUDE.md` tells Claude the rules.
 5. **Pack and push:** `node tools/pack.mjs` checks the dash the way the app will and writes its `dash.bundle.json`, the one file the app fetches. Commit both and push.
@@ -91,6 +93,27 @@ Reading keys: `rpm`, `map_kpa`, `tps_pct`, `ect_c`, `iat_c`, `lambda1`, `lambda2
 
 Draw on your own `requestAnimationFrame`, not on each reading. Everything else is your call: alarms (ours has a banner), when the tab bar hides, whether a game runs while the car moves (read `speed_kmh`).
 
+## Limits and alarms
+
+The limits a dash draws and warns with are **the dash's own**, not the kit's. The kit's channel table (`kit/channels.js` `CHANNELS`) is true for any car: names, units, decimals, icons, and a plain scale to draw on. It has no red or amber zones, no valid ranges, and no notes about one engine.
+
+Ours (`starters/tunerloop/`) keeps its limits in one file, `ranges.js`: for each channel its red, amber, and cold zones, valid range, note, and what its dial prints (`RANGES`, in base units: rpm, kPa, °C, lambda, volts), plus the oil pressure envelope (`OIL`) and the warm-up point (`WARM_BELOW_C`). They start as the numbers for the car the dash was built on (an air-cooled 3.8 flat six on a Link G4X): edit them for your car in your copy of `starters/tunerloop/`. There are no settings for them. At mount ours applies them before anything is drawn:
+
+```js
+useChannels(RANGES);       // this dash's limits onto the kit's table (kit/channels.js)
+useOil(OIL);               // the Oil Envelope and the alarm that uses it (kit/oil.js)
+```
+
+Every kit module reads that table, so it all follows: the tach's red ticks, the Pull view's shift light (`rpm.shift`), a wideband's note on the Lambda Twin, which readings count as no reading at all (`valid`). The fields a dash may add to a channel are listed at the top of `kit/channels.js`.
+
+Its alarm rules are in `alarms.js` (`ALARMS`): each `{ id, sev: 'red' | 'warn', key, text, holdMs, on(r), off(r) }`. The kit has the engine (`kit/alarms.js` `checkAlarms`) and the banner (`kit/alarm_banner.js` `showAlarms(root, reading, now, ALARMS)`, called each frame). The temperature alarms sit at the starts of their channels' red and amber zones in `ranges.js`, so moving a zone moves its alarm.
+
+## The kit
+
+The parts ours is built from, in `starters/tunerloop/kit/` (your copy carries its own): `channels` (the table, `useChannels`, `shown()` for the chosen units, `zoneOf()`), `units` (`useUnits(api.units)`), `oil`, `steady` (numbers that don't flicker), `kit` (canvas drawing: axes, traces, the type scale), `gauge` (the dial, the big number, the grid), `twin` (the Lambda Twin), `phone_boxes` (speed, G meter, the Pull view), `details` (the Oil Envelope and the detail views), `charts`, `trend_data` and `trend_views`, `hist` (recent history), `alarms` and `alarm_banner`, `automodes`, `touch` (touches as taps, swipes, and long presses), `slide` (pages that follow the finger), `light` (Vintage 3D's light), `icons`, `d3defs`, and `html` (`esc()` for text put into HTML).
+
+Theme variables are set on `.dash[data-theme="modern" | "vintage" | "vintage3d" | "race"]` (set `api.root.dataset.theme`) by `kit/themes.css`: `--d-face`, `--d-value`, `--d-label`, `--d-needle`, `--d-ok`, `--d-warn`, `--d-red`, `--d-grid`, `--d-track`, `--d-font`, and more. The boxes' styles are `kit/boxes.css`; the type scale `--t-lbl` to `--t-hero` is set on `.panel` (a size container). A dash without the kit sets its own look (`dashes/big-numbers/big-numbers.css`).
+
 ## What a dash can't do
 
 - It runs in a sandboxed frame with no network: no `fetch`, sockets, images, or fonts from the internet, no `localStorage` (use `api.store`), no access to the app, its account, or the ECU. Nothing a dash can send leads to a plan, an approval, a command, or a write.
@@ -103,6 +126,10 @@ Draw on your own `requestAnimationFrame`, not on each reading. Everything else i
 The frame sits inside the phone's safe area: the app keeps it clear of the notch and the home bar, so a dash needs no insets of its own.
 
 For developers: opening the app with `?safe` runs ours whatever was picked, with an empty store of its own.
+
+## Starting from ours, and keeping up
+
+`starters/tunerloop/` is the app's dash as of the version in its `dash.json` (`basedOn`) and in the first line of each `kit/` file. Your copy doesn't get the app's later changes by itself. When a newer starter lands here, ask Claude to "merge the changes between the old and new starters/tunerloop into my dash".
 
 ## License
 
