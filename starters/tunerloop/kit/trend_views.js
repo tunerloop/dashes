@@ -200,15 +200,17 @@ export function zoneLines(v, T, warming = false) {
 // text, so the size step holds still as they change), warming, span, vals (for the range), at(k) (the
 // line, newest first), under(k)? (a thin dashed line), breaks, timeLabel, tip, now (the newest
 // point's value, null for none), note? (said across an empty chart) }.
-function glanceFrame(cv, key, o) {
-  const c = prep(cv); if (!c) return;
-  const [g, w, h] = c, T = themeOf(cv), Z = typeScale(w, h), v = view(key), { ch, conv } = v;
+// The glance pages' top: two numbers in big type over the window, each with its name above and its
+// unit under (cells: [[name, text, unit, 'cold'?]]; widest: each one's widest text, so the size step
+// holds still). Returns where the window starts and the pad and number size: { p, top, size }. The
+// compass pages (compass_views.js) share it.
+export function glanceHead(cv, g, w, h, T, Z, cells, widest) {
   const num = T.chartNum || T.fg, p = Math.max(8, Math.min(w, h) * 0.05), cw = (w - p) / 2, lbl = Math.min(Z.lbl, cw * 0.14);   // the columns reach half a pad into the sides
-  const step = ['big', 'value', 'small'].find((n) => Z[n] <= h * 0.3 && o.widest.every((t) => fixedWidth(g, t, font(T, Z[n])) <= cw * 0.9)) ?? 'small';
+  const step = ['big', 'value', 'small'].find((n) => Z[n] <= h * 0.3 && widest.every((t) => fixedWidth(g, t, font(T, Z[n])) <= cw * 0.9)) ?? 'small';
   const size = Z[step];
-  cv.dataset.step = step; cv.dataset.span = o.seconds ?? o.span;   // the size step and the span shown (seconds for the 15 minutes), for scripts/browser/glance.mjs
+  cv.dataset.step = step;   // the size step, for scripts/browser/glance.mjs
   const numY = p + lbl * 1.4 + size * 0.82, band = numY + lbl * 1.6 - p;
-  o.cells.forEach(([k, t, unit, tone], i) => {
+  cells.forEach(([k, t, unit, tone], i) => {
     const cx = p / 2 + cw * i + cw / 2, color = tone === 'cold' ? T.cold : num;
     label(g, T, k, cx, p + lbl, lbl, T.label, 'center');
     g.save(); g.shadowColor = T.chartLine || color; g.shadowBlur = T.chartGlow;
@@ -216,7 +218,15 @@ function glanceFrame(cv, key, o) {
     g.restore();
     if (unit) label(g, T, unit, cx, numY + lbl * 1.5, lbl, T.label, 'center');
   });
-  const cy = p + band + p * 0.6, cwid = w - 2 * p, chh = h - cy - p, levels = zoneLines(v, T, o.warming);
+  return { p, top: p + band + p * 0.6, size };
+}
+
+function glanceFrame(cv, key, o) {
+  const c = prep(cv); if (!c) return;
+  const [g, w, h] = c, T = themeOf(cv), Z = typeScale(w, h), v = view(key), { ch, conv } = v;
+  const { p, top: cy, size } = glanceHead(cv, g, w, h, T, Z, o.cells, o.widest);
+  cv.dataset.span = o.seconds ?? o.span;   // the span shown (seconds for the 15 minutes), for scripts/browser/glance.mjs
+  const cwid = w - 2 * p, chh = h - cy - p, levels = zoneLines(v, T, o.warming);
   const r = niceRange([...o.vals, ...levels.map((l) => l.v)], v.minSpan) || { lo: ch.min, hi: ch.max, step: (ch.max - ch.min) / 2 };
   const line = T.chartLine || T.fg, series = [{ fn: o.at, color: line, w: 2.5, fill: T.chartFill || T.fg, alpha: T.chartFillAlpha ?? 0.08, glow: T.chartGlow }];
   if (o.under) series.push({ fn: o.under, color: line, w: 1.2, dash: [3, 4] });

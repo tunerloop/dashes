@@ -9,6 +9,7 @@ import { icon } from './icons.js';
 import { steadyText, holdAngle } from './steady.js';
 import { VDO_DIGITS } from './vdo-digits.js';
 import { drawRecent, drawGlanceView } from './trend_views.js';
+import { drawMixCompass, drawGCompass } from './compass_views.js';
 
 // Where the light comes from in Vintage 3D, in the dial's degrees (0 up, clockwise): the needle's
 // lit bevel is the side facing it. light.js moves it with the phone's tilt.
@@ -168,6 +169,7 @@ export function makeBig(key) {
 // or by day), the reading now riding the line, with Warm and Hot lines, in one window
 // (trend_views.js drawGlanceView; boxes.css styles it an amber LCD in the Vintage themes). It reads
 // the history, so set() is only there to fit the box shape.
+const COMPASS = { mix: drawMixCompass, g: drawGCompass };   // compass_views.js
 export function makeGlance(key, view = 'recent') {
   const el = document.createElement('div');
   el.className = 'box glance';
@@ -177,11 +179,11 @@ export function makeGlance(key, view = 'recent') {
   return {
     el,
     set() {},
-    frame() {                                         // a point a second: redrawn then, or when resized
-      const now = performance.now(), w = cv.clientWidth, h = cv.clientHeight;
-      if (now - drawnAt < 1000 && w === drawnW && h === drawnH) return;
+    frame() {                                         // the charts a point a second, the compasses' trails 10 times a second, or when resized
+      const now = performance.now(), w = cv.clientWidth, h = cv.clientHeight, compass = COMPASS[view];
+      if (now - drawnAt < (compass ? 100 : 1000) && w === drawnW && h === drawnH) return;
       drawnAt = now; drawnW = w; drawnH = h;
-      drawGlanceView(cv, key, view);
+      if (compass) compass(cv); else drawGlanceView(cv, key, view);
     },
     rebuild() { drawnAt = 0; },
   };

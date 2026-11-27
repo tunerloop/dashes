@@ -16,10 +16,18 @@ const GLANCES = [['recent', 'Last 15 min'], ['today', 'Today'], ['days', 'Last 3
 
 // [{ where: 'panel'|'full', kind: 'box'|'graphs'|'detail', level, view?, name }] for a box spec.
 export function pageList(spec) {
+  if (spec.kind === 'g') {   // the G meter, then its compass (kit/compass_views.js), in a panel and full screen
+    return [
+      { where: 'panel', kind: 'box', level: null, name: 'G meter' },
+      { where: 'panel', kind: 'graphs', level: null, view: 'g', name: 'Compass' },
+      { where: 'full', kind: 'graphs', level: 0, view: 'g', name: 'Compass' },
+    ];
+  }
   if (spec.kind === 'twindial' || ((spec.kind === 'big' || spec.kind === 'gauge') && CHANNELS[spec.key]?.vdo)) {   // a VDO dial: oil temp's row of pages
     const glances = CHANNELS[spec.key].phone ? GLANCES.slice(0, 1) : GLANCES;   // the hub keeps no history of the phone's own readings
     return [
       { where: 'panel', kind: 'box', level: null, name: 'Dial' },
+      ...(spec.kind === 'twindial' ? [{ where: 'panel', kind: 'graphs', level: null, view: 'mix', name: 'Compass' }] : []),   // the banks' compass second
       { where: 'panel', kind: 'graphs', level: null, view: 'recent', name: 'Graphs' },
       ...glances.map(([view, name], level) => ({ where: 'full', kind: 'graphs', level, view, name })),
     ];

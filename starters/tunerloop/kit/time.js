@@ -8,6 +8,11 @@ export function rowTimes(rows) {
 }
 
 // "9:41 pm": clock times in 12-hour form, local time.
+// A date and time as one short line: "Nov 26 2:52 pm" (no "at", as some browsers' toLocaleString adds).
+export function dateTime(d) {
+  return `${new Date(d).toLocaleDateString([], { month: 'short', day: 'numeric' })} ${clock12(d)}`;
+}
+
 export function clock12(d) {
   const t = new Date(d);
   const h = t.getHours() % 12 || 12;
