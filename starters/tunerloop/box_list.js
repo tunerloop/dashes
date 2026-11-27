@@ -9,9 +9,9 @@ export const LIVE_CHART_S = 60;   // the live chart shows the last minute
 // units a box without one channel shows (units.js), for the two-finger tap that changes them.
 export const BOXES = [
   { id: 'tach', name: 'Tach', kind: 'gauge', key: 'rpm' },
-  { id: 'speed', name: 'Speed', kind: 'speed', units: 'speed' },
+  { id: 'speed', name: 'Speed', kind: 'big', key: 'speed_kmh' },
   { id: 'g', name: 'G meter', kind: 'g' },
-  { id: 'oil', name: 'Oil pressure', kind: 'oil', units: 'pressure' },
+  { id: 'oil', name: 'Oil pressure', kind: 'big', key: 'oil_kpa' },
   { id: 'oilt', name: 'Oil temp', kind: 'big', key: 'oil_temp_c' },
   { id: 'grid', name: 'All numbers', kind: 'grid' },
   { id: 'twin', name: 'Lambda', kind: 'twin', units: 'mixture' },

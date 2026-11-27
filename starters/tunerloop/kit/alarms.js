@@ -1,4 +1,4 @@
-// kit/alarms.js: the app's kit/alarms.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/alarms.js: the app's kit/alarms.js as forked with tunerloop-dash. Yours to change.
 // The alarm engine: a pure check of each live reading against a dash's rules, MoTeC/AiM style. A rule
 // fires only when its condition holds for holdMs, and only under its qualifier (engine running, revs
 // up, under load), so start-up and idle don't cry wolf. It clears at a separate, gentler level

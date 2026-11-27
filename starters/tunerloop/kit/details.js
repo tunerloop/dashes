@@ -1,4 +1,4 @@
-// kit/details.js: the app's kit/details.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/details.js: the app's kit/details.js as forked with tunerloop-dash. Yours to change.
 // The detail levels of the Car tab's gauges: what swipe up shows in full screen. Level 0 is the
 // gauge's own box; DETAILS[id].levels names every level and draw(g, w, h, level, T, r) paints
 // levels 1 and up on a canvas from the live history (hist.js). The Oil Envelope is a canvas at

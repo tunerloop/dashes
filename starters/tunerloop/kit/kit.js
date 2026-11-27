@@ -1,4 +1,4 @@
-// kit/kit.js: the app's kit/kit.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/kit.js: the app's kit/kit.js as forked with tunerloop-dash. Yours to change.
 // Canvas drawing for the Car tab's detail views: the theme's colours and font (themes.css --d-*),
 // sizing a canvas for the screen, and the few shapes every detail view draws (text, labels, round
 // boxes, lines, a chart of a history ring). Shared so each view stays short.
@@ -71,10 +71,13 @@ export const GAP_PX = 54;
 // the value up, whichever way the phone is held. breaks: [{k, ms}] newest first, each a fixed-width
 // mark just older than sample k (k -1: right of the newest). P(k, v) -> [x, y]; base(k) is the point at
 // the bottom of the value range (where a fill closes); marks: each break's [x0, x1] and ms.
-export function axes(x, y, w, h, span, lo, hi, breaks = []) {
+// tight: a break takes only its mark, not also the slot between the samples either side of it (for
+// a few wide buckets, where one slot is a big share of the width; a ring of one a second has no need).
+export function axes(x, y, w, h, span, lo, hi, breaks = [], tight = false) {
   const G = breaks.length ? Math.min(GAP_PX, w * 0.5 / breaks.length) : 0, dataW = w - G * breaks.length;
-  const f = (v) => (clamp(v, lo, hi) - lo) / (hi - lo), along = (k) => k / (span - 1) * dataW;
   const before = (k) => { let c = 0; for (const b of breaks) if (b.k < k) c++; return c; };
+  const slots = Math.max(1, span - 1 - (tight ? breaks.length : 0)), pos = (k) => (tight ? k - before(k) : k);
+  const f = (v) => (clamp(v, lo, hi) - lo) / (hi - lo), along = (k) => pos(k) / slots * dataW;
   const P = (k, v) => [x + w - along(k) - before(k) * G, y + h - f(v) * h];
   const marks = breaks.map((b, j) => { const r = x + w - along(Math.max(0, b.k)) - j * G; return { x0: r - G, x1: r, ms: b.ms }; });
   return { P, base: (k) => P(k, lo), marks };
@@ -103,7 +106,7 @@ export function markGap(g, T, { x0, x1, ms }, y, h) {
 // breaks (see axes), sparse }. A line stops at each break. A dropout of a few samples is drawn across, a
 // longer one left empty; sparse: samples are far apart, so only the breaks stop the line.
 export function trace(g, T, x, y, w, h, o) {
-  const span = o.span, breaks = o.breaks || [], { P, base, marks } = axes(x, y, w, h, span, o.lo, o.hi, breaks), minGap = Math.max(2, Math.ceil(span * 0.05));
+  const span = o.span, breaks = o.breaks || [], { P, base, marks } = axes(x, y, w, h, span, o.lo, o.hi, breaks, o.tight), minGap = Math.max(2, Math.ceil(span * 0.05));
   g.save(); rr(g, x, y, w, h, 8); g.clip();
   g.fillStyle = T.chartBg; g.fillRect(x, y, w, h);
   for (const gv of o.grid || []) { const [a, b] = P(0, gv), [c, d] = P(span - 1, gv); line(g, a, b, c, d, T.grid, 1); }

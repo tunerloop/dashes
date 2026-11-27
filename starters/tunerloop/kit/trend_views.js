@@ -1,12 +1,13 @@
-// kit/trend_views.js: the app's kit/trend_views.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/trend_views.js: the app's kit/trend_views.js as forked with tunerloop-dash. Yours to change.
 // The value panels' charts (battery, head temp, oil temp): the last minute along the bottom of the
 // panel, then full screen the last hour and the last 30 days by day, each with now, min, max, and the
 // trend of the current climb or fall (trend_rules.js runTrend). Time with no data takes no room: each gap is one small mark with its length.
 import { hist } from './hist.js';
 import { CHANNELS, shown, warmAt } from './channels.js';
+import { oilMin } from './oil.js';
 import { steadyText } from './steady.js';
 import { prep, themeOf, typeScale, font, text, label, fixed, fixedWidth, trace, axes, line, signed, twoCharts, GAP_PX } from './kit.js';
-import { summarize, summarizeDays, runTrend, niceRange, collapseGaps, gapText, timeChart, glance, etaText, growSpan } from './trend_rules.js';
+import { summarize, summarizeDays, runTrend, niceRange, collapseGaps, gapText, timeChart, glance, etaText, growSpan, bucketSeries, bucketSummary, binSeries, binSize } from './trend_rules.js';
 import { trendData } from './trend_data.js';
 import { addTip, nearest } from './canvas_tip.js';
 import { clock12 } from './time.js';
@@ -50,46 +51,144 @@ export function drawRecent(cv, key, secs, timeLabel) {
     series: [{ fn: (k) => (k < ring.len ? conv(ring.at(k)) : NaN), color: T.chartLine || T.fg, w: 2.5, fill: T.chartFill || T.fg, alpha: T.chartFillAlpha ?? 0.08, glow: T.chartGlow }] });
 }
 
-// A dial box's graphs page (gauge.js makeGlance): two numbers over its last 15 minutes (the chart's
-// time axis grows from 10 s as readings come in, so the line spans it from the start), the trend in
-// whole degrees a minute and, while it is under its warm-up temperature, how long until it gets there
-// at that rate (m:ss, then minutes), once warm the highest of the 15 minutes. The reading now is a tag
-// riding the line's newest point, in place of a value axis: dashed lines mark the warm-up temperature
-// and, once warm, Hot (where the red zone starts), each labelled. The numbers take the type scale's
-// big step, or the largest under it their widest values fit (kit.js typeScale).
+// A dial box's graphs pages (gauge.js makeGlance), all in one look: two numbers over a chart in one
+// window, dashed lines at the warm-up temperature and Hot (where the red zone starts), each labelled,
+// and the reading now as a tag riding the line's newest point, in place of a value axis. The numbers
+// take the type scale's big step, or the largest under it their widest values fit (kit.js typeScale).
+// view: 'recent' (the last 15 minutes, one point a second), 'today' (15-minute buckets since
+// midnight) or 'days' (one point a day for 30 days); stored ones from the hub (trend_data.js), time
+// with no data one small mark with its length.
+export function drawGlanceView(cv, key, view = 'recent') {
+  (view === 'today' ? glanceToday : view === 'days' ? glanceDays : drawGlance)(cv, key);
+}
+
+// The last 15 minutes (the chart's time axis grows from 10 s as readings come in, so the line spans
+// it from the start), the trend in whole degrees a minute and, while it is under its warm-up
+// temperature, how long until it gets there at that rate (m:ss, then minutes), once warm the highest
+// of the 15 minutes.
 export function drawGlance(cv, key, most = 900) {
-  const c = prep(cv); if (!c) return;
-  const [g, w, h] = c, T = themeOf(cv), Z = typeScale(w, h), v = view(key), { ch, conv, delta, base } = v, ring = hist.slow[key];
+  const v = view(key), { ch, conv, delta, base } = v, ring = hist.slow[key], temp = isTemp(base);
   const secs = growSpan(ring.len, most);   // the time axis grows with the data, from 10 s up to 15 minutes, so the line always fills it
-  const raw = []; for (let k = 0; k < Math.min(secs, ring.len); k++) raw.push(ring.at(k));
-  const warm = warmAt(base), limit = base.red?.[0]?.[0] ?? null, s = glance(raw, { warmAt: warm, minMove: (base.trend?.span ?? 20) / 20 });
-  const warming = s && s.warmS !== undefined, num = T.chartNum || T.fg;
-  const cells = [['Trend', s && s.rate !== null ? signed(delta(s.rate * 60), 0) : '-', `${ch.unit}/min`, num],
-    warming ? ['Warm in', etaText(s.warmS), '', T.cold] : ['Max', s ? conv(s.max).toFixed(0) : '-', ch.unit, num]];
-  const p = Math.max(8, Math.min(w, h) * 0.05), cw = (w - p) / 2, lbl = Math.min(Z.lbl, cw * 0.14);   // the columns reach half a pad into the sides
-  const widest = ['+88', '8:88', '888'];   // sized for the widest each can be, so the step holds still as they change
-  const step = ['big', 'value', 'small'].find((n) => Z[n] <= h * 0.3 && widest.every((t) => fixedWidth(g, t, font(T, Z[n])) <= cw * 0.9)) ?? 'small';
+  const n = Math.min(secs, ring.len), raw = []; for (let k = 0; k < n; k++) raw.push(ring.at(k));
+  const s = glance(raw, { warmAt: temp ? warmAt(base) : null, minMove: (base.trend?.span ?? 20) / 20 }), warming = s && s.warmS !== undefined;
+  const vals = raw.map(conv), held = vals.filter(Number.isFinite), lo = held.length ? Math.min(...held) : null;
+  const avg = held.length ? held.reduce((t, x) => t + x, 0) / held.length : null, hi = s ? conv(s.max) : null;
+  // Drawn in bins of B seconds (about 90 points), so a busy reading stays readable over 15 minutes:
+  // each bin's average as the line, and for a pressure its lowest dashed (a dip stays seen).
+  const B = binSize(secs), bins = binSeries((k) => vals[k], n, B), span = Math.max(2, Math.ceil(secs / B));
+  const at = (k) => bins.avg[k] ?? NaN, under = base.kind === 'pressure' ? (k) => bins.min[k] ?? NaN : null;
+  const rawBreaks = hist.breaks('slow', secs), breaks = rawBreaks.map((b) => ({ ...b, k: b.k < 0 ? b.k : Math.floor(b.k / B) }));
+  const cells = base.kind === 'speed' ? [cell('Max', v, hi), cell('Avg', v, avg)] : !temp ? [cell('Min', v, lo), cell('Max', v, hi)]
+    : [['Trend', s && s.rate !== null ? signed(delta(s.rate * 60), 0) : '-', `${ch.unit}/min`],
+      warming ? ['Warm in', etaText(s.warmS), '', 'cold'] : cell('Max', v, hi)];
+  const { extra, second } = glanceAdds(v, n, B);
+  const tip = ringTip(ch, rawBreaks);
+  glanceFrame(cv, key, {
+    cells, widest: temp ? ['+88', '8:88', wide(v)] : [wide(v)], warming, span, vals: [...bins.avg, ...(under ? bins.min : []), ...extra.vals], at, under, breaks,
+    timeLabel: gapText(secs * 1000), tip: (k, val) => tip(k * B, val), now: s ? conv(s.now) : null, extra: extra.series, second, seconds: secs,
+  });
+}
+const wide = (v) => widestText(v);
+
+// What a channel's 15 minutes adds, from the dash's ranges (glance), in the same bins: revMin, the
+// least oil pressure that's normal for the revs (kit/oil.js oilMin of each bin's average rpm, only
+// with the engine running), as a thin red line in the channel's own units; second, another channel
+// on its own scale (its catalogue range), as a thin line with its name in the corner.
+function glanceAdds(v, n, B) {
+  const extra = { series: [], vals: [] }, g = v.base.glance || {}, ringOf = (k) => (r) => (k < r.len ? r.at(k) : NaN);
+  if (g.revMin && hist.slow.rpm) {
+    const rpm = binSeries((k) => ringOf(k)(hist.slow.rpm), n, B).avg, line = rpm.map((r) => (r > 300 ? v.conv(oilMin(r)) : NaN));
+    extra.series.push({ fn: (k) => line[k] ?? NaN, color: 'red', w: 1.5, label: 'Normal min' });
+    extra.vals.push(...line.filter(Number.isFinite));
+  }
+  const k2 = g.second, c2 = k2 && CHANNELS[k2], ring2 = k2 && hist.slow[k2];
+  const b2 = ring2 ? binSeries((k) => ringOf(k)(ring2), n, B).avg : null;
+  const second = c2 && b2 ? { at: (k) => b2[k] ?? NaN, lo: c2.min, hi: c2.max, label: `${c2.short || c2.label}${c2.unit ? ` ${c2.unit}` : ''}` } : null;
+  return { extra, second };
+}
+
+// What a channel's glance pages lead with. A temperature: how fast it climbs and its highest, then
+// its highest and average. A pressure, where low is the danger: its lowest and highest, then its
+// lowest and average. Anything else (the battery): its lowest and highest.
+const isTemp = (base) => base.kind === 'temperature';
+function cell(k, v, x) { return [k, x === null || x === undefined || !Number.isFinite(x) ? '-' : x.toFixed(v.ch.dp ?? 0), v.ch.unit]; }
+// The widest a channel's number gets in display units, as 8s, so the size step holds still.
+function widestText(v) { return [v.base.min, v.base.max].map((x) => Math.abs(v.conv(x)).toFixed(v.ch.dp ?? 0)).sort((a, b) => b.length - a.length)[0].replace(/\d/g, '8'); }
+
+// Stored buckets ({ at, min, max, avg, n }) in the same look: each bucket's average as the line,
+// and a thin dashed line for the side that matters (a temperature's max, anything else's min), with
+// the summary on top (see cell). gaps: mark missing buckets as a gap (today's parked time); off, held
+// buckets simply follow each other (the days driven, so a day at home doesn't chop the 30 days up).
+function glanceBuckets(cv, key, d, stepMs, timeLabel, when, gaps = true) {
+  const v = view(key), { ch, conv, base } = v, { pts, breaks: all } = bucketSeries(d.rows, stepMs), breaks = gaps ? all : [], sum = bucketSummary(pts);
+  const temp = isTemp(base), edge = temp ? 'max' : 'min', edgeName = temp ? 'Max' : 'Min', c = (k) => (sum ? conv(sum[k]) : null);
+  const at = (k) => (k < pts.length ? conv(pts[k].avg) : NaN), side = (k) => (k < pts.length ? conv(pts[k][edge] ?? pts[k].avg) : NaN);
+  const cells = temp ? [cell('Max', v, c('max')), cell('Avg', v, c('avg'))] : base.kind === 'pressure' ? [cell('Min', v, c('min')), cell('Avg', v, c('avg'))]
+    : [cell('Min', v, c('min')), cell('Max', v, c('max'))];
+  glanceFrame(cv, key, {
+    cells, widest: [widestText(v)], warming: false, span: Math.max(2, pts.length), vals: pts.flatMap((q) => [conv(q.avg), conv(q[edge] ?? q.avg)]), at, breaks,
+    timeLabel, tip: (k, val) => [when(pts[k]), `Avg ${valText(ch, val)}`, `${edgeName} ${valText(ch, side(k))}`], under: side,
+    now: pts.length ? at(0) : null, note: pts.length ? null : d.loaded ? 'No data' : 'Loading', tight: true,
+  });
+}
+const QUARTER_MS = 15 * 60_000;
+function glanceToday(cv, key) {
+  glanceBuckets(cv, key, trendData('today', key), QUARTER_MS, 'Today', (q) => `${clock12(q.at)} to ${clock12(q.at + QUARTER_MS)}`);
+}
+function glanceDays(cv, key) {
+  const d = trendData('days', key), rows = d.rows.map((x) => ({ ...x, at: Date.parse(`${x.day}T00:00:00Z`) }));
+  glanceBuckets(cv, key, { ...d, rows }, DAY_MS, `${rows.length} of ${DAYS} days`, (q) => dayText(q.day), false);
+}
+
+// The dashed lines across a glance chart, from the dash's zones: a temperature's warm-up point
+// (Warm), and each red zone's edge: Low where it starts at the bottom of the scale, else Hot (a
+// temperature) or High. While warming up only Warm shows.
+export function zoneLines(v, T, warming = false) {
+  const { base, conv, ch } = v, out = [], fmt = (x) => conv(x).toFixed(ch.dp ?? 0), warm = isTemp(base) ? warmAt(base) : null;
+  if (warm !== null) out.push({ v: conv(warm), color: T.cold, label: `Warm ${fmt(warm)}` });
+  if (warming) return out;
+  for (const [lo, hi] of base.red || []) {
+    if (lo <= base.min + 1e-9) out.push({ v: conv(hi), color: T.red, label: `Low ${fmt(hi)}` });
+    else out.push({ v: conv(lo), color: T.red, label: `${isTemp(base) ? 'Hot' : 'High'} ${fmt(lo)}` });
+  }
+  return out;
+}
+
+// The frame all three share. o: { cells: [[label, text, unit, 'cold'?]], widest (each cell's widest
+// text, so the size step holds still as they change), warming, span, vals (for the range), at(k) (the
+// line, newest first), under(k)? (a thin dashed line), breaks, timeLabel, tip, now (the newest
+// point's value, null for none), note? (said across an empty chart) }.
+function glanceFrame(cv, key, o) {
+  const c = prep(cv); if (!c) return;
+  const [g, w, h] = c, T = themeOf(cv), Z = typeScale(w, h), v = view(key), { ch, conv } = v;
+  const num = T.chartNum || T.fg, p = Math.max(8, Math.min(w, h) * 0.05), cw = (w - p) / 2, lbl = Math.min(Z.lbl, cw * 0.14);   // the columns reach half a pad into the sides
+  const step = ['big', 'value', 'small'].find((n) => Z[n] <= h * 0.3 && o.widest.every((t) => fixedWidth(g, t, font(T, Z[n])) <= cw * 0.9)) ?? 'small';
   const size = Z[step];
-  cv.dataset.step = step; cv.dataset.span = secs;   // the size step and seconds shown, for scripts/browser/glance.mjs
+  cv.dataset.step = step; cv.dataset.span = o.seconds ?? o.span;   // the size step and the span shown (seconds for the 15 minutes), for scripts/browser/glance.mjs
   const numY = p + lbl * 1.4 + size * 0.82, band = numY + lbl * 1.6 - p;
-  cells.forEach(([k, t, unit, color], i) => {
-    const cx = p / 2 + cw * i + cw / 2;
+  o.cells.forEach(([k, t, unit, tone], i) => {
+    const cx = p / 2 + cw * i + cw / 2, color = tone === 'cold' ? T.cold : num;
     label(g, T, k, cx, p + lbl, lbl, T.label, 'center');
     g.save(); g.shadowColor = T.chartLine || color; g.shadowBlur = T.chartGlow;
     fixed(g, t, cx, numY, font(T, size), color, 0, 'center');
     g.restore();
     if (unit) label(g, T, unit, cx, numY + lbl * 1.5, lbl, T.label, 'center');
   });
-  const cy = p + band + p * 0.6, cwid = w - 2 * p, chh = h - cy - p, vals = raw.map(conv);
-  const levels = [];
-  if (warm !== null) levels.push({ v: conv(warm), color: T.cold, label: `Warm ${conv(warm).toFixed(0)}` });
-  if (!warming && limit !== null) levels.push({ v: conv(limit), color: T.red, label: `Hot ${conv(limit).toFixed(0)}` });
-  const r = niceRange([...vals, ...levels.map((l) => l.v)], v.minSpan) || { lo: ch.min, hi: ch.max, step: (ch.max - ch.min) / 2 };
-  const line = T.chartLine || T.fg, breaks = hist.breaks('slow', secs);
-  const { P } = trace(g, T, p, cy, cwid, chh, { breaks, span: secs, lo: r.lo, hi: r.hi, grid: grid(r), timeLabel: gapText(secs * 1000), levels, levelsLeft: true, tip: ringTip(ch, breaks),
-    series: [{ fn: (k) => (k < ring.len ? conv(ring.at(k)) : NaN), color: line, w: 2.5, fill: T.chartFill || T.fg, alpha: T.chartFillAlpha ?? 0.08, glow: T.chartGlow }] });
-  const nowT = s ? nowText(key, ch, null) : '-';
-  if (nowT !== '-') nowTag(g, T, Z, size, nowT, ch.unit, { P, at: (k) => (k < ring.len ? conv(ring.at(k)) : NaN), now: conv(s.now), top: cy, h: chh, fill: line });
+  const cy = p + band + p * 0.6, cwid = w - 2 * p, chh = h - cy - p, levels = zoneLines(v, T, o.warming);
+  const r = niceRange([...o.vals, ...levels.map((l) => l.v)], v.minSpan) || { lo: ch.min, hi: ch.max, step: (ch.max - ch.min) / 2 };
+  const line = T.chartLine || T.fg, series = [{ fn: o.at, color: line, w: 2.5, fill: T.chartFill || T.fg, alpha: T.chartFillAlpha ?? 0.08, glow: T.chartGlow }];
+  if (o.under) series.push({ fn: o.under, color: line, w: 1.2, dash: [3, 4] });
+  for (const e of o.extra || []) series.push({ ...e, color: e.color === 'red' ? T.red : e.color });
+  if (o.second) {   // another channel on its own scale, drawn across the same height
+    const { at: at2, lo: lo2, hi: hi2 } = o.second;
+    series.push({ fn: (k) => r.lo + (Math.min(hi2, Math.max(lo2, at2(k))) - lo2) / (hi2 - lo2) * (r.hi - r.lo), color: T.cold, w: 1.5 });
+  }
+  const { P } = trace(g, T, p, cy, cwid, chh, { breaks: o.breaks, span: o.span, lo: r.lo, hi: r.hi, grid: grid(r), timeLabel: o.timeLabel, levels, levelsLeft: true, tip: o.tip, series, tight: o.tight });
+  if (o.note) note(g, T, Z, p, cy, cwid, chh, o.note);
+  const keys = [...(o.extra || []).filter((e) => e.label).map((e) => [e.label, T.red]), ...(o.second ? [[o.second.label, T.cold]] : [])];
+  keys.forEach(([t, color], i) => text(g, t, p + cwid - 5, cy + 14 + i * 15, font(T, 11, 600), color, 'right'));   // what the extra lines are, top right
+  const nowT = o.now === null ? '-' : nowText(key, ch, null);
+  if (nowT !== '-') nowTag(g, T, Z, size, nowT, ch.unit, { P, at: o.at, now: o.now, top: cy, h: chh, fill: line });
 }
 
 // The reading now as a tag at the numbers' size (big: the least for something read at a glance while

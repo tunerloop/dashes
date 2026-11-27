@@ -1,4 +1,4 @@
-// kit/steady.js: the app's kit/steady.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/steady.js: the app's kit/steady.js as forked with tunerloop-dash. Yours to change.
 // Numbers that don't flicker. The shown value moves only when the reading passes 3/4 of a step
 // beyond it (hysteresis), at most maxHz times a second, and the step widens while the value sweeps
 // fast (RPM in 250s during a pull, 50s when steady). Digits stay put because the dash font's

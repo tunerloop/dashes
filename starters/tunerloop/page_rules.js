@@ -13,8 +13,11 @@ export function pageAcross(fromPages, at, toPages, last = {}) {
   const from = fromPages[at], full = toPages.map((p, k) => [p, k]).filter(([p]) => p.where === 'full');
   return (full.find(([p]) => p.level === from.level) || full[full.length - 1])[1];
 }
-// The page for a full screen detail level (test mode, the saved view): its index in the row.
+// The page for a full screen detail level (test mode, the saved view): its index in the row (past
+// the last level: the last page).
 export function fullPage(pages, level) {
   const full = pages.map((p, k) => [p, k]).filter(([p]) => p.where === 'full');
-  return full.length ? full[Math.max(0, Math.min(level, full.length - 1))][1] : 0;
+  if (!full.length) return 0;
+  const at = full.find(([p]) => p.level === level);
+  return (at || full[full.length - 1])[1];
 }

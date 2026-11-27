@@ -1,4 +1,4 @@
-// kit/uplot.js: the app's packages/uplot/uPlot.esm.min.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/uplot.js: the app's packages/uplot/uPlot.esm.min.js as forked with tunerloop-dash. Yours to change.
 /**
 * Copyright (c) 2025, Leon Sorokin
 * All rights reserved. (MIT Licensed)

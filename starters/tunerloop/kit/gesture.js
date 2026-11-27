@@ -1,4 +1,4 @@
-// kit/gesture.js: the app's kit/gesture.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/gesture.js: the app's kit/gesture.js as forked with tunerloop-dash. Yours to change.
 // Touch decisions as plain functions (no DOM), for touch.js and any dash: which box is next, and what
 // a pointer's movement was. Checked by tests/unit/gesture.test.js.
 

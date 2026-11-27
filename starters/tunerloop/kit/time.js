@@ -1,4 +1,4 @@
-// kit/time.js: the app's kit/time.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/time.js: the app's kit/time.js as forked with tunerloop-dash. Yours to change.
 // Each row's time (its t) in ms, worked out once per rows array.
 const times = new WeakMap();
 export function rowTimes(rows) {

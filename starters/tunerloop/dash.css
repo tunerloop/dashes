@@ -54,6 +54,7 @@
 .dset button { margin: 0; min-height: 48px; padding: 0 1em; border: 1px solid var(--d-grid); border-radius: 2cqmin; background: var(--d-track); color: var(--d-value); font: inherit; }
 .dset button.on { background: var(--d-value); color: var(--d-face); border-color: var(--d-value); }
 .dset .done { margin-top: auto; }
-/* The app's tab bar handle takes the bottom 60px (the right 60px sideways) while the tab bar is hidden: keep buttons out of it. */
+/* The app's tab bar handle takes the bottom 60px (the right 60px sideways) while the tab bar is hidden
+   (the app's css/car_tab.css .nav-pull): the panel keeps its buttons out of it. */
 .dset { padding-bottom: calc(3cqmin + 64px); }
 @media (orientation: landscape) { .dset { padding-bottom: 3cqmin; padding-right: calc(3cqmin + 64px); } }

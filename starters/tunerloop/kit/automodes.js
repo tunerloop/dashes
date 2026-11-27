@@ -1,4 +1,4 @@
-// kit/automodes.js: the app's kit/automodes.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/automodes.js: the app's kit/automodes.js as forked with tunerloop-dash. Yours to change.
 // Automatic modes: for a while a Car tab panel shows what the moment needs, then hands back.
 //   Hard acceleration: full throttle and pulling -> the Pull view (RPM, speed, 0-60 or 50-70 timer).
 //   Cornering: past 0.5 g -> the G meter, held 6 s after the last big g.

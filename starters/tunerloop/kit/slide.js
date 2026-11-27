@@ -1,4 +1,4 @@
-// kit/slide.js: the app's kit/slide.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/slide.js: the app's kit/slide.js as forked with tunerloop-dash. Yours to change.
 // Pages moving with the finger: the page on screen (from) and the one coming in (to) move together
 // along one axis, the incoming one a page behind on side dir (1: below or right, -1: above or left),
 // with a groove between them naming it (up and down only). With nothing coming in, the page moves a

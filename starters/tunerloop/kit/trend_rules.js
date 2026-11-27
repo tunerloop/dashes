@@ -1,4 +1,4 @@
-// kit/trend_rules.js: the app's kit/trend_rules.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/trend_rules.js: the app's kit/trend_rules.js as forked with tunerloop-dash. Yours to change.
 // The value panels' history as plain functions (no DOM), checked by tests/unit/trend-rules.test.js:
 // min and max, the rate of the current climb or fall, and a chart range that holds still.
 
@@ -165,3 +165,38 @@ export function etaText(s) {
   const t = Math.max(0, Math.round(s));
   return t < 600 ? `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}` : `${Math.min(99, Math.ceil(t / 60))}m`;
 }
+
+// Stored buckets (oldest first, each { at, ... } with at its start in ms) as a chart's series: the
+// buckets newest first, and a break wherever whole buckets are missing between two held ones (the
+// chart gives a gap one small mark with its length, collapseGaps). stepMs: one bucket's length.
+export function bucketSeries(rows, stepMs) {
+  const pts = [...rows].sort((a, b) => b.at - a.at), breaks = [];
+  for (let k = 0; k + 1 < pts.length; k++) {
+    const missing = Math.round((pts[k].at - pts[k + 1].at) / stepMs) - 1;
+    if (missing > 0) breaks.push({ k, ms: missing * stepMs });
+  }
+  return { pts, breaks };
+}
+
+// The lowest min, the highest max and the reading-weighted average of a set of buckets ({ min, max,
+// avg, n }), or null.
+export function bucketSummary(rows) {
+  const held = rows.filter((r) => Number.isFinite(r.max) && Number.isFinite(r.avg));
+  if (!held.length) return null;
+  const n = held.reduce((t, r) => t + (r.n || 1), 0), mins = held.map((r) => (Number.isFinite(r.min) ? r.min : r.avg));
+  return { min: Math.min(...mins), max: Math.max(...held.map((r) => r.max)), avg: held.reduce((t, r) => t + r.avg * (r.n || 1), 0) / n };
+}
+
+// A ring of one sample a second (newest first, get(k)) as bins of B seconds, newest first: each bin's
+// average, lowest and highest of its finite samples (NaN for a bin with none). n: samples to use.
+export function binSeries(get, n, B) {
+  const avg = [], min = [], max = [];
+  for (let b = 0; b * B < n; b++) {
+    let s = 0, c = 0, lo = Infinity, hi = -Infinity;
+    for (let k = b * B; k < Math.min((b + 1) * B, n); k++) { const x = get(k); if (Number.isFinite(x)) { s += x; c++; lo = Math.min(lo, x); hi = Math.max(hi, x); } }
+    avg.push(c ? s / c : NaN); min.push(c ? lo : NaN); max.push(c ? hi : NaN);
+  }
+  return { avg, min, max };
+}
+// The bin size that keeps a chart of secs seconds near `points` points.
+export const binSize = (secs, points = 90) => Math.max(1, Math.round(secs / points));

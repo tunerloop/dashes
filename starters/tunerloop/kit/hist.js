@@ -1,4 +1,4 @@
-// kit/hist.js: the app's kit/hist.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/hist.js: the app's kit/hist.js as forked with tunerloop-dash. Yours to change.
 // A short history of the live reading on the phone, for the Car tab's detail views (the 10 s and
 // 30 s charts, the compass cloud, the G trail, the temperature trends). Fast channels are sampled
 // 25 times a second for 30 s; slow ones once a second for 15 minutes. A missing value is NaN. Peak g for this drive is kept too.
@@ -13,7 +13,9 @@ export class Ring {
 
 export const FAST_HZ = 25;
 const FAST_KEYS = ['rpm', 'tps_pct', 'map_kpa', 'lambda1', 'lambda2', 'lambda_target', 'oil_kpa', 'speed_kmh', 'g_lat', 'g_long'];
-const SLOW_KEYS = ['ect_c', 'oil_temp_c', 'iat_c', 'battery_v'];
+// Every channel a glance page draws needs its 15 minutes here: a dash's VDO dial boxes, and what
+// their charts add (throttle beside speed, rpm for oil pressure's least for the revs).
+const SLOW_KEYS = ['ect_c', 'oil_temp_c', 'iat_c', 'battery_v', 'oil_kpa', 'speed_kmh', 'tps_pct', 'rpm'];
 
 // Time with no readings is not stored: the rings simply stop, so the charts stop scrolling. Each stop
 // longer than this is remembered as a break to mark on the chart.

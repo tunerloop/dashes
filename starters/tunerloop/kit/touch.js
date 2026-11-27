@@ -1,4 +1,4 @@
-// kit/touch.js: the app's kit/touch.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/touch.js: the app's kit/touch.js as forked with tunerloop-dash. Yours to change.
 // A panel's touches as intents, so the dash never handles pointer events itself:
 //   tap()                     a short touch that did not move
 //   longPress()               held still for LONG_PRESS_MS (the box menu)

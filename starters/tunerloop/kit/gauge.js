@@ -1,4 +1,4 @@
-// kit/gauge.js: the app's kit/gauge.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/gauge.js: the app's kit/gauge.js as forked with tunerloop-dash. Yours to change.
 // The Car tab's boxes that show one channel: a round dial with a needle, and a big number with its
 // icon and its last minute as a graph. Both take a value with set() and move towards it on each animation frame (frame(dt)), so
 // readings arriving 5 a second still sweep smoothly. Colours and fonts come from the theme's CSS
@@ -8,7 +8,7 @@ import { CHANNELS, zoneOf, reading, shown, maxChars } from './channels.js';
 import { icon } from './icons.js';
 import { steadyText, holdAngle } from './steady.js';
 import { VDO_DIGITS } from './vdo-digits.js';
-import { drawRecent, drawGlance } from './trend_views.js';
+import { drawRecent, drawGlanceView } from './trend_views.js';
 
 // Where the light comes from in Vintage 3D, in the dial's degrees (0 up, clockwise): the needle's
 // lit bevel is the side facing it. light.js moves it with the phone's tilt.
@@ -53,9 +53,9 @@ export function makeGauge(key) {
   let ticks = '', nums = '', vdo = '';
   const within = (zs, v) => (zs || []).some(([lo, hi]) => v >= lo - 1e-9 && v <= hi + 1e-9);
   const inZone = (v) => within(ch.warn, v) || within(ch.red, v);
-  const minor = step / 5;
+  const steps = ch.dial.steps ?? 5, minor = step / steps;   // steps between numbers: 5 (a tick every fifth), or 4 for one at halfway
   for (let i = 0, v = ch.min; v <= ch.max + 1e-9; i++, v = ch.min + i * minor) {
-    const major = i % 5 === 0;
+    const major = i % steps === 0;
     // minor ticks are drawn 12 long; each theme shows as much of a tick as it wants (stroke-dasharray, boxes.css)
     const [x0, y0] = pt(88, ang(v)), [x1, y1] = pt(major ? 73 : 76, ang(v));
     const hot = inZone(v) ? ' hot' : within(ch.cold, v) ? ' cold' : '';   // in a warn or red zone, or still cold: Vintage colours the tick instead of drawing the arc
@@ -72,7 +72,7 @@ export function makeGauge(key) {
     .map(([c, [lo, hi]]) => `<path class="zone ${c}" d="${arc(84, ang(lo), ang(hi))}"/>`).join('');
   // dialLabel: the name on the face, with {unit} where the unit goes; then the LCD shows the number alone
   const unitOnFace = !!ch.dialLabel?.includes('{unit}'), lcdUnit = unitOnFace ? '' : ch.unit;
-  const faceLabel = (ch.dialLabel || ch.label).replace('{unit}', ch.unit).trim();
+  const faceLabel = (ch.dialLabel || ch.label).replace('{unit}', ch.unit.toUpperCase()).trim();   // printed like the real faces: OIL °F, OIL PSI
   const valW = maxChars(base) * 12.5, unitW = lcdUnit.length * 6.5, valX = -(valW + 3 + unitW) / 2 + valW;   // nothing moves as digits change
   // The digits' ink sits left of and above their text box (glyph side bearing, baseline under the
   // cap height): these nudges centre the readout in the LCD window (rect y 51..76).
@@ -148,10 +148,12 @@ export function makeBig(key) {
   };
 }
 
-// A dial box's graphs page (the dash's pages.js): its trend and its warm-up time or highest over its last
-// 15 minutes, the reading now riding the line, with Warm and Hot lines, in one window (trend_views.js drawGlance; boxes.css styles it an amber LCD in
-// the Vintage themes). It reads the history, so set() is only there to fit the box shape.
-export function makeGlance(key) {
+// A dial box's graphs page (the dash's pages.js): view 'recent' (its trend and its warm-up time or
+// highest over its last 15 minutes), 'today' or 'days' (its highest and average, in 15-minute buckets
+// or by day), the reading now riding the line, with Warm and Hot lines, in one window
+// (trend_views.js drawGlanceView; boxes.css styles it an amber LCD in the Vintage themes). It reads
+// the history, so set() is only there to fit the box shape.
+export function makeGlance(key, view = 'recent') {
   const el = document.createElement('div');
   el.className = 'box glance';
   el.innerHTML = '<div class="glance-win"><canvas class="glance-cv"></canvas></div>';
@@ -164,7 +166,7 @@ export function makeGlance(key) {
       const now = performance.now(), w = cv.clientWidth, h = cv.clientHeight;
       if (now - drawnAt < 1000 && w === drawnW && h === drawnH) return;
       drawnAt = now; drawnW = w; drawnH = h;
-      drawGlance(cv, key);
+      drawGlanceView(cv, key, view);
     },
     rebuild() { drawnAt = 0; },
   };

@@ -1,4 +1,4 @@
-// kit/light.js: the app's kit/light.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/light.js: the app's kit/light.js as forked with tunerloop-dash. Yours to change.
 // The light in Vintage 3D follows the phone's tilt: the dial's gradients, the needle's shadow and the
 // glass's reflection move with it. Runs inside the dash's frame (dashes/tunerloop-dash/index.js); the tilt comes with each
 // reading (tilt_x, tilt_y from the phone's sensors, added by the app's js/dash/car_tab.js).

@@ -1,7 +1,9 @@
 // A box's pages: what a panel can show of one box, in order, a dot each. First the panel pages (the
-// glance; a VDO dial box also its graphs), then the full screen pages, one per detail level
-// (details.js DETAILS): level 0 is the box itself, full size (held upright, with its chart under it
-// where it has one); higher levels are the detail canvases. pageList() is pure; makePageView() builds
+// glance; a VDO dial box also its graphs), then the full screen pages. A VDO dial box's are its graphs
+// three ways, each the panel graphs' look full size (kit/gauge.js makeGlance): the last 15 minutes,
+// today, and the last 30 days. Any other box's are one per detail level (details.js DETAILS): level 0
+// the box itself, full size (held upright, with its chart under it where it has one); higher levels
+// the detail canvases. pageList() is pure; makePageView() builds
 // one page's element, which the panels show, slide and feed readings (update) like any other.
 import { CHANNELS } from './kit/channels.js';
 import { makeGlance } from './kit/gauge.js';
@@ -10,13 +12,21 @@ import { WHOLE } from './box_list.js';
 import { makeBox } from './boxes.js';
 import { rowTimes } from './kit/time.js';
 
-// [{ where: 'panel'|'full', kind: 'box'|'graphs'|'detail', level, name }] for a box spec.
+const GLANCES = [['recent', 'Last 15 min'], ['today', 'Today'], ['days', 'Last 30 days']];
+
+// [{ where: 'panel'|'full', kind: 'box'|'graphs'|'detail', level, view?, name }] for a box spec.
 export function pageList(spec) {
+  if (spec.kind === 'big' && CHANNELS[spec.key]?.vdo) {
+    const glances = CHANNELS[spec.key].phone ? GLANCES.slice(0, 1) : GLANCES;   // the hub keeps no history of the phone's own readings
+    return [
+      { where: 'panel', kind: 'box', level: null, name: 'Dial' },
+      { where: 'panel', kind: 'graphs', level: null, view: 'recent', name: 'Graphs' },
+      ...glances.map(([view, name], level) => ({ where: 'full', kind: 'graphs', level, view, name })),
+    ];
+  }
   const id = detailOf(spec), levels = id ? DETAILS[id].levels : [spec.name || ''];
-  const dial = spec.kind === 'big' && !!CHANNELS[spec.key]?.vdo;
   return [
-    { where: 'panel', kind: 'box', level: null, name: dial ? 'Dial' : levels[0] },
-    ...(dial ? [{ where: 'panel', kind: 'graphs', level: null, name: 'Graphs' }] : []),
+    { where: 'panel', kind: 'box', level: null, name: levels[0] },
     ...levels.map((name, level) => ({ where: 'full', kind: level ? 'detail' : 'box', level, name })),
   ];
 }
@@ -51,7 +61,7 @@ export function makePageView(spec, page) {
     el.append(cv);
     return { el, page, update: (ctx) => drawDetail(cv, id, page.level, ctx.value), rebuild() {}, destroy() {} };
   }
-  const box = page.kind === 'graphs' ? makeGlance(spec.key) : makeBox(spec);
+  const box = page.kind === 'graphs' ? makeGlance(spec.key, page.view) : makeBox(spec);
   box.el.hidden = false;
   el.append(box.el);
   // Full screen held upright: the box takes the top half and its chart the bottom (DETAILS[id].under).
