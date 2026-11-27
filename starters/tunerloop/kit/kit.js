@@ -1,4 +1,4 @@
-// kit/kit.js: the app's kit/kit.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/kit.js: the app's kit/kit.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // Canvas drawing for the Car tab's detail views: the theme's colours and font (themes.css --d-*),
 // sizing a canvas for the screen, and the few shapes every detail view draws (text, labels, round
 // boxes, lines, a chart of a history ring). Shared so each view stays short.

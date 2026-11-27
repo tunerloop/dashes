@@ -1,4 +1,4 @@
-// kit/twin.js: the app's kit/twin.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/twin.js: the app's kit/twin.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // The Lambda Twin box: both banks on one scale centred on the target, so the driver reads the error,
 // not two numbers. Bars grow left for rich and right for lean (+-15 % full scale), with the +-3 %
 // target band shaded. A SPLIT note appears when the banks differ by more than 0.04. On overrun

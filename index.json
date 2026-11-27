@@ -4,9 +4,17 @@
       "dir": "dashes/big-numbers",
       "id": "big-numbers",
       "name": "Big numbers",
+      "version": "1.1.0",
+      "author": "TunerLoop",
+      "description": "Four readings you pick, as big as the screen allows, in your units. Tap to hide or show the tab bar; the gear picks the readings."
+    },
+    {
+      "dir": "dashes/shift-light",
+      "id": "shift-light",
+      "name": "Shift light",
       "version": "1.0.0",
       "author": "TunerLoop",
-      "description": "Four readings you pick, as big as the screen allows, in your units. Tap to hide or show the tab bar."
+      "description": "A full-screen shift light: a row of lights that fill with the revs and flash at the shift point, and the best RPM this phone has seen. Tap to hide or show the tab bar."
     }
   ]
 }

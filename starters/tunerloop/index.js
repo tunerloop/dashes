@@ -4,7 +4,8 @@
 // (scripts/fork_dash.mjs), give dash.json a new id, change what you like.
 //
 // Its limits (zones, valid ranges, the oil envelope, the warm-up point) are its own, in ranges.js; its
-// alarm rules in alarms.js.
+// alarm rules in alarms.js. The redline follows the car's tune (api.tune.rev_limit). Its settings
+// (gauge style, automatic modes) are its own too, in settings.js, opened by the app's gear.
 //
 // Data comes from the app: each reading (base units, with the phone's speed, g and tilt and the 0-60
 // timer), the live chart's rows and the 2-hour trend; the phone's recent history at start.
@@ -22,15 +23,19 @@ import { createPanels } from './panels.js';
 import { startFrom } from './start.js';
 import { RANGES, OIL, WARM_BELOW_C } from './ranges.js';
 import { ALARMS } from './alarms.js';
+import { loadSettings, openSettings } from './settings.js';
 
 const KEEP_ROWS = 3000, CHART_EVERY_MS = 100;   // the live chart shows the last minute: keep what the app keeps
 
 export default function mount(api) {
-  const root = api.root, s = api.settings, start = startFrom(api.params);
+  const root = api.root, start = startFrom(api.params);
+  let s = loadSettings(api.store);
   root.dataset.theme = start?.theme || s.style;
   root.insertAdjacentHTML('beforeend', D3_DEFS);
-  // Before anything is drawn: this dash's ranges.
+  // Before anything is drawn: this dash's ranges, the redline from the tune when the app has it.
+  const redline = () => redlineFrom(api.tune);
   useChannels(RANGES);
+  useChannels(redlineRanges(redline().rpm));
   useOil(OIL);
   useUnits(api.units);
   setTrendSource({ call: (name, body) => api.request('trend', { name, body }), bridge: () => api.bridge });
@@ -38,7 +43,16 @@ export default function mount(api) {
   const panels = createPanels(root, api, start);
   // Under a test address the automatic modes are off unless it asks for them (auto=1): the simulated
   // drive keeps setting them off.
-  const autoOn = start && !start.auto ? {} : { pull: s.auto_pull, corner: s.auto_corner, stop: s.auto_stop, warm: s.auto_warm, warmBelow: WARM_BELOW_C };
+  const autosFrom = (x) => (start && !start.auto ? {} : { pull: x.auto_pull, corner: x.auto_corner, stop: x.auto_stop, warm: x.auto_warm, warmBelow: WARM_BELOW_C });
+  let autoOn = autosFrom(s);
+  api.on('settings', () => openSettings(root, api, s, redline, (next) => {
+    const restyle = next.style !== s.style && !start?.theme;
+    s = next;
+    autoOn = autosFrom(s);
+    if (restyle) { root.dataset.theme = s.style; panels.rebuild(); }
+  }));
+  // A new tune read: the redline moves with it.
+  api.on('tune', () => { useChannels(redlineRanges(redline().rpm)); panels.rebuild(); });
 
   let value = null, smooth = 70, autoSt = {};
   const feed = { rows: [], tms: [], end: null, trend: [] };
@@ -73,4 +87,16 @@ export default function mount(api) {
     if (chartDue) lastChart = now;
     showAlarms(root, value, now, ALARMS);
   });
+}
+
+// The redline: the tune's rev limit, else the one in ranges.js. Red from there to the end of
+// the scale; the Pull view's shift light 800 rpm before it.
+const AS_FOUND = RANGES.rpm.red[0][0];
+export function redlineFrom(tune) {
+  const rpm = tune?.rev_limit;
+  return Number.isFinite(rpm) && rpm >= 2000 && rpm <= 20000 ? { rpm, fromTune: true } : { rpm: AS_FOUND, fromTune: false };
+}
+export function redlineRanges(rpm) {
+  const top = Math.max(RANGES.rpm.red[0][1], Math.ceil((rpm + 500) / 1000) * 1000);
+  return { rpm: { red: [[rpm, top]], shift: rpm - 800 } };
 }

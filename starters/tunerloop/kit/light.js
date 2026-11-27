@@ -1,15 +1,19 @@
-// kit/light.js: the app's kit/light.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/light.js: the app's kit/light.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // The light in Vintage 3D follows the phone's tilt: the dial's gradients, the needle's shadow and the
 // glass's reflection move with it. Runs inside the dash's frame (dashes/tunerloop-dash/index.js); the tilt comes with each
 // reading (tilt_x, tilt_y from the phone's sensors, added by the app's js/dash/car_tab.js).
 import { setLightAt } from './gauge.js';
 
 let at = 0;
+let drawn = '';       // the light as last drawn: a phone lying still writes nothing
 export function moveLight(root, r, now) {
   if (now - at < 100) return;
   at = now;
   const cl = (v) => Math.max(-0.95, Math.min(0.95, v));
   const lx = cl(-0.45 + (r?.tilt_x ?? 0) * 1.2), ly = cl(-0.65 - (r?.tilt_y ?? 0) * 1.2), pct = (v, k) => `${(50 + v * k).toFixed(1)}%`;
+  const key = `${lx.toFixed(2)} ${ly.toFixed(2)}`;
+  if (key === drawn && root.querySelector('#d3-face')?.getAttribute('cx') === pct(lx, 22)) return;
+  drawn = key;
   const set = (id, attrs) => { const el = root.querySelector(`#${id}`); if (el) for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v); };
   set('d3-face', { cx: pct(lx, 22), cy: pct(ly, 22) });
   set('d3-cap', { cx: pct(lx, 33), cy: pct(ly, 33) });

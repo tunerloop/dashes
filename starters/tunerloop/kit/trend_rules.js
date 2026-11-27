@@ -1,4 +1,4 @@
-// kit/trend_rules.js: the app's kit/trend_rules.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/trend_rules.js: the app's kit/trend_rules.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // The value panels' history as plain functions (no DOM), checked by tests/unit/trend-rules.test.js:
 // min and max, the rate of the current climb or fall, and a chart range that holds still.
 

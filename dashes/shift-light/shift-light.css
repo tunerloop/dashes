@@ -1,0 +1,21 @@
+/* The shift light's look. An installed dash gets none of the app's styles (only the fonts), so its
+   colours are its own: these are the kit's Vintage values. */
+.dash {
+  --sl-bg: #000; --sl-track: rgba(242, 242, 240, 0.08); --sl-ok: #8fd18f; --sl-warn: #ff8c2e; --sl-red: #e8402a;
+  --sl-value: #f2f2f0; --sl-label: #c4c2bc;
+  --sl-font: Oxanium, Saira, "Barlow Condensed", "Arial Narrow", sans-serif;   /* fonts the app gives every dash */
+  background: var(--sl-bg); container-type: size;
+}
+.sl { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 6cqmin; padding: 8cqmin; font-family: var(--sl-font); }
+.row { display: flex; gap: 2.5cqmin; }
+.row i { flex: 1; aspect-ratio: 1; border-radius: 50%; background: var(--sl-track); }
+.row i.on.g { background: var(--sl-ok); } .row i.on.a { background: var(--sl-warn); } .row i.on.r { background: var(--sl-red); }
+.row.flash i { background: var(--sl-red); box-shadow: 0 0 4cqmin var(--sl-red); }
+.n { text-align: center; color: var(--sl-value); font-size: 28cqmin; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.best { text-align: center; color: var(--sl-label); font-size: clamp(11px, 3.6cqmin, 16px); letter-spacing: 0.08em; text-transform: uppercase; }
+/* its settings (index.js), opened by the app's gear */
+.sl-set { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; justify-content: center; gap: 4cqmin; padding: 8cqmin; background: var(--sl-bg); color: var(--sl-value); font: 600 clamp(15px, 4.5cqmin, 22px)/1.2 var(--sl-font); }
+.sl-set label { display: flex; flex-direction: column; gap: 1.5cqmin; color: var(--sl-label); }
+.sl-set input { font: inherit; color: var(--sl-value); background: var(--sl-track); border: 1px solid var(--sl-label); border-radius: 8px; padding: 10px 12px; }
+.sl-set p { margin: 0; color: var(--sl-label); font-size: 0.8em; }
+.sl-set button { font: inherit; min-height: 48px; color: var(--sl-bg); background: var(--sl-value); border: 0; border-radius: 8px; }

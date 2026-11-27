@@ -14,7 +14,7 @@ import { scanImports } from './imports.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const LIMITS = { files: 64, bytes: 1_500_000 };   // the app's (src/js/dash/loader.js LIMITS)
-const BUILTIN = ['tunerloop-dash', 'shift-light'];  // ids the app's own dashes have: a package can't
+const BUILTIN = ['tunerloop-dash'];   // the id of the app's own dash: a package can't have it
 
 // A dash folder's files as the app takes them: dash.json, .js and .css, by path in the folder.
 export function readFolder(dir, prefix = '', out = {}) {
@@ -38,7 +38,7 @@ export function problems(files) {
   try { json = JSON.parse(files['dash.json']); } catch (e) { return [...out, `dash.json is not JSON: ${e.message}`]; }
   const { ok, errors, manifest } = checkManifest(json);
   if (!ok) return [...out, ...errors.map((e) => `dash.json: ${e}`)];
-  if (BUILTIN.includes(manifest.id)) out.push(`dash.json: id '${manifest.id}' is one of the app's own dashes: give yours its own id`);
+  if (BUILTIN.includes(manifest.id)) out.push(`dash.json: id '${manifest.id}' is the app's own dash's: give yours its own id`);
   for (const p of [manifest.entry, ...manifest.styles]) if (!(p in files)) out.push(`no ${p} in the folder`);
   // Every import, from the entry on, is a relative path to a file in the folder.
   const seen = new Set(), todo = [manifest.entry];

@@ -13,7 +13,7 @@ test('a good dash has no problems', () => {
 test('the manifest is checked as the app checks it', () => {
   assert.match(problems({ 'dash.json': '{', 'index.js': '' })[0], /dash\.json is not JSON/);
   assert.ok(problems({ 'dash.json': manifest({ version: '1' }), 'index.js': '' }).some((p) => /dash\.json: .*version/.test(p)));
-  assert.match(problems(dash({ 'dash.json': manifest({ id: 'shift-light' }) })).join(), /one of the app's own dashes/);
+  assert.match(problems(dash({ 'dash.json': manifest({ id: 'tunerloop-dash' }) })).join(), /the app's own dash's/);
   assert.match(problems({ 'dash.json': manifest() }).join(), /no index\.js in the folder/);
   assert.match(problems(dash({ 'dash.json': manifest({ styles: ['a.css'] }) })).join(), /no a\.css in the folder/);
 });
@@ -35,7 +35,7 @@ test('the limits are the app\'s', () => {
 });
 
 test('a folder is read as the app takes it: dash.json, .js and .css, no bundle, no dot files', () => {
-  const files = readFolder(new URL('../dashes/big-numbers', import.meta.url).pathname);
-  assert.ok('dash.json' in files && 'index.js' in files && 'big-numbers.css' in files);
+  const files = readFolder(new URL('../starters/empty', import.meta.url).pathname);   // (in the template repo too)
+  assert.ok('dash.json' in files && 'index.js' in files);
   assert.ok(!('dash.bundle.json' in files));
 });

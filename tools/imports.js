@@ -1,5 +1,4 @@
-// Copied from the TunerLoop app (src/js/dash/imports.js, web app 1.4.187) so tools/pack.mjs checks a dash the
-// way the app will. Don't edit it here: take a fresh copy when the app changes it.
+// imports.js: the TunerLoop app's own (web app 1.4.194), written by its scripts/dash_tools.mjs. Don't edit.
 // The import specifiers in a module's text, for the dash loader (loader.js): static imports,
 // re-exports (`export ... from`) and import() of a string literal, with where each specifier's text
 // sits so the loader can rewrite exactly it. A small lexer, one pass, so no input can make it slow

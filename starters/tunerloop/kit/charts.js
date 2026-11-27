@@ -1,4 +1,4 @@
-// kit/charts.js: the app's kit/charts.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/charts.js: the app's kit/charts.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // The Car tab's chart boxes, drawn with uPlot (packages/uplot, vendored): the live chart (the last
 // minute, scrolling with the playback clock) and the trend chart (2 hours of heartbeats). View
 // only: no zoom or drag, because a sideways swipe changes the box. The mouse (never a finger) over a

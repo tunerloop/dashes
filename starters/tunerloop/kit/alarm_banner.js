@@ -1,4 +1,4 @@
-// kit/alarm_banner.js: the app's kit/alarm_banner.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/alarm_banner.js: the app's kit/alarm_banner.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // The alarm banner: runs the alarm check (alarms.js) with a dash's rules on each frame and shows the
 // worst firing alarm in words, with the reading, across the bottom of the dash. Red fills the
 // banner and is spoken once; amber is a slimmer strip. A tap snoozes that alarm for a minute (it

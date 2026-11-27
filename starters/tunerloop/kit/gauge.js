@@ -1,4 +1,4 @@
-// kit/gauge.js: the app's kit/gauge.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/gauge.js: the app's kit/gauge.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // The Car tab's boxes that show one channel: a round dial with a needle, and a big number with its
 // icon and its last minute as a graph. Both take a value with set() and move towards it on each animation frame (frame(dt)), so
 // readings arriving 5 a second still sweep smoothly. Colours and fonts come from the theme's CSS

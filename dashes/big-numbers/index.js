@@ -1,12 +1,18 @@
-// Big numbers: four readings the person picks in Settings, each filling a quarter of the screen,
-// in their display units. Uses only the raw dash API (no kit), so the whole dash is this file and
+// Big numbers: four readings the person picks, each filling a quarter of the screen, in their
+// display units. Uses only the raw dash API (no kit), so the whole dash is this file, units.js and
 // big-numbers.css. Readings arrive in base units (kPa, °C, km/h, lambda); units.js turns them into
 // the person's.
+// Its settings are its own: which four readings, kept in its store and picked in its panel, which
+// the app's gear opens (api.on('settings')).
 import { LABELS, show } from './units.js';
 
+const DEFAULT = ['rpm', 'oil_temp_c', 'oil_kpa', 'lambda1'];
+
 export default function mount(api) {
-  const keys = ['a', 'b', 'c', 'd'].map((k) => api.settings[k]);
-  api.root.innerHTML = `<div class="grid">${keys.map((k) => `<div class="cell"><div class="num">-</div><div class="lbl"></div></div>`).join('')}</div>`;
+  // What the store holds is checked: a key this dash doesn't know gives way to the default.
+  const kept = api.store.get('keys');
+  let keys = DEFAULT.map((k, i) => (Array.isArray(kept) && Object.hasOwn(LABELS, kept[i]) ? kept[i] : k));
+  api.root.innerHTML = `<div class="grid">${keys.map(() => '<div class="cell"><div class="num">-</div><div class="lbl"></div></div>').join('')}</div>`;
   const cells = [...api.root.querySelectorAll('.cell')];
   let units = api.units, last = {}, dim = false, dirty = true;
 
@@ -17,8 +23,26 @@ export default function mount(api) {
   const relabel = () => { keys.forEach((k, i) => { cells[i].querySelector('.lbl').textContent = label(k); }); dirty = true; };
   relabel();
 
-  api.on('reading', (v, t, m) => { last = v; dim = !!m.dim; dirty = true; });
+  api.on('reading', (v, t, m) => { last = v || {}; dim = !!m.dim; dirty = true; });
   api.on('units', (u) => { units = u; relabel(); });
+  api.on('settings', openPanel);
+
+  function openPanel() {
+    api.root.querySelector('.bn-set')?.remove();
+    api.nav.hide();
+    const el = document.createElement('div');   // not a form: the frame's sandbox blocks submitting one
+    el.className = 'bn-set';
+    const options = (now) => Object.keys(LABELS).map((k) => `<option value="${k}"${k === now ? ' selected' : ''}>${LABELS[k]}</option>`).join('');
+    el.innerHTML = keys.map((k, i) => `<label>${['Top left', 'Top right', 'Bottom left', 'Bottom right'][i]}<select>${options(k)}</select></label>`).join('')
+      + '<button type="button">Done</button>';
+    el.querySelector('button').addEventListener('click', () => {
+      keys = [...el.querySelectorAll('select')].map((s) => s.value);
+      api.store.set('keys', keys);
+      relabel();
+      el.remove();
+    });
+    api.root.append(el);
+  }
 
   // Numbers change at most 4 times a second, so they can be read, drawn on the screen's own clock.
   let shownAt = 0;
@@ -31,6 +55,6 @@ export default function mount(api) {
     requestAnimationFrame(frame);
   })(0);
 
-  // The tab bar: a tap anywhere hides it or brings it back.
-  api.root.addEventListener('click', () => (api.nav.shown ? api.nav.hide() : api.nav.show()));
+  // The tab bar: a tap anywhere but the panel hides it or brings it back.
+  api.root.addEventListener('click', (e) => { if (!e.target.closest('.bn-set')) api.nav.shown ? api.nav.hide() : api.nav.show(); });
 }

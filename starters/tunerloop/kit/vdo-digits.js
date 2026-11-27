@@ -1,4 +1,4 @@
-// kit/vdo-digits.js: the app's kit/vdo-digits.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/vdo-digits.js: the app's kit/vdo-digits.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // The Vintage dials' numerals, drawn by scripts/vdo_digits.mjs (edit there, never here): the VDO
 // type on classic gauge faces, on one even grid. Each digit is 1000 units tall, x from 0, y down from
 // its top; w is its width. Fill with fill-rule evenodd (holes are inner contours). Only 0 to 8 exist:
