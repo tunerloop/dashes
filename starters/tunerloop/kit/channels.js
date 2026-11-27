@@ -37,8 +37,17 @@ export const CHANNELS = {
   oil_kpa:    { kind: 'pressure', label: 'Oil pressure', short: 'Oil press', unit: 'kPa', dp: 0, min: 0, max: 700, dial: { step: 100, scale: 1 }, icon: 'oilp' },
   fuel_kpa:   { kind: 'pressure', label: 'Fuel pressure', short: 'Fuel press', unit: 'kPa', dp: 0, min: 0, max: 400, dial: { step: 50, scale: 1 }, icon: 'gauge' },
   ign_deg:    { label: 'Ignition', unit: '°', dp: 1, min: -10, max: 50, dial: { step: 10, scale: 1 }, icon: 'gauge' },
-  speed_kmh:  { kind: 'speed', label: 'Speed', unit: 'km/h', dp: 0, min: 0, max: 240, dial: { step: 20, scale: 1 }, icon: 'gauge', phone: true },   // the phone's GPS (sensors.js)
+  speed_kmh:  { kind: 'speed', label: 'Speed', unit: 'km/h', dp: 0, min: 0, max: 240, dial: { step: 20, scale: 1 }, icon: 'gauge' },   // the phone's GPS (sensors.js), kept on the hub like the ECU's (recorder.js)
   oil_temp_c: { kind: 'temperature', label: 'Oil temp', unit: '°C', dp: 0, min: 40, max: 150, dial: { step: 20, scale: 1 }, icon: 'oil' },
+};
+
+// The phone's strongest g each way in each 5 s, kept on the hub (recorder.js): history only (the G
+// pages' Today and 30 days, compass_views.js drawGEnvelope), never a live reading, so not in CHANNELS.
+export const G_PEAKS = {
+  g_long_max: { label: 'Accel', unit: 'g', dp: 2, valid: [-3, 3] },
+  g_long_min: { label: 'Braking', unit: 'g', dp: 2, valid: [-3, 3] },
+  g_lat_max:  { label: 'Right', unit: 'g', dp: 2, valid: [-3, 3] },
+  g_lat_min:  { label: 'Left', unit: 'g', dp: 2, valid: [-3, 3] },
 };
 
 // A dash's ranges onto the table every kit module reads, in place (a dash's frame has its own copy of

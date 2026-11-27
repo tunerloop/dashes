@@ -10,7 +10,7 @@ import { steadyText, holdAngle, ease } from './steady.js';
 import { esc, f1 } from './html.js';
 import { VDO_DIGITS } from './vdo-digits.js';
 import { drawRecent, drawGlanceView } from './trend_views.js';
-import { drawMixCompass, drawGCompass } from './compass_views.js';
+import { drawMixCompass, drawGCompass, drawGEnvelope } from './compass_views.js';
 
 // Where the light comes from in Vintage 3D, in the dial's degrees (0 up, clockwise): the needle's
 // lit bevel is the side facing it. light.js moves it with the phone's tilt.
@@ -177,7 +177,7 @@ export function makeBig(key) {
 // or by day), the reading now riding the line, with Warm and Hot lines, in one window
 // (trend_views.js drawGlanceView; boxes.css styles it an amber LCD in the Vintage themes). It reads
 // the history, so set() is only there to fit the box shape.
-const COMPASS = { mix: drawMixCompass, g: drawGCompass };   // compass_views.js
+const COMPASS = { mix: drawMixCompass, g: drawGCompass, gtoday: (cv) => drawGEnvelope(cv, 'today'), gdays: (cv) => drawGEnvelope(cv, 'days') };   // compass_views.js
 export function makeGlance(key, view = 'recent') {
   const el = document.createElement('div');
   el.className = 'box glance';

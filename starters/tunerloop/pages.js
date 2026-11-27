@@ -2,10 +2,9 @@
 // the full screen pages. A VDO dial box (oil temp, oil pressure, battery, head temp, the tach, speed,
 // Lambda's dual dial): its dial, its graphs in the panel look (kit/gauge.js makeGlance; Lambda also the
 // banks' compass), then its graphs full screen for the last 15 minutes, today, and the last 30 days.
-// The G meter: the meter, then its compass. Any other box (All numbers): itself, then itself full
+// The G meter: the meter, then its compass, then the grip used today and over the last 30 days. Any other box (All numbers): itself, then itself full
 // screen. pageList() is pure; makePageView() builds one page's element, which the panels show, slide
 // and feed readings (update) like any other.
-import { CHANNELS } from './kit/channels.js';
 import { makeGlance } from './kit/gauge.js';
 import { WHOLE } from './box_list.js';
 import { makeBox } from './boxes.js';
@@ -17,13 +16,14 @@ const full = (kind, name, level, more = {}) => ({ where: 'full', kind, level, na
 
 // Each kind of row (box_list.js row), from a box spec: [{ where, kind: 'box'|'graphs', level, view?, keys?, name }].
 const ROWS = {
-  dial: (spec) => [   // the hub keeps no history of the phone's own readings, so speed has only its 15 minutes
+  dial: (spec) => [
     panel('box', 'Dial'),
     ...(spec.compass ? [panel('graphs', 'Compass', { view: spec.compass })] : []),
     panel('graphs', 'Graphs', { view: 'recent' }),
-    ...GLANCES.slice(0, CHANNELS[spec.key]?.phone ? 1 : GLANCES.length).map(([view, name], level) => full('graphs', name, level, { view })),
+    ...GLANCES.map(([view, name], level) => full('graphs', name, level, { view })),
   ],
-  g: () => [panel('box', 'G meter'), panel('graphs', 'Compass', { view: 'g' }), full('graphs', 'Compass', 0, { view: 'g' })],
+  g: () => [panel('box', 'G meter'), panel('graphs', 'Compass', { view: 'g' }), full('graphs', 'Compass', 0, { view: 'g' }),
+    full('graphs', 'Today', 1, { view: 'gtoday' }), full('graphs', 'Last 30 days', 2, { view: 'gdays' })],
   grid: (spec) => {
     const parts = [];
     for (let i = 0; i < spec.keys.length; i += GRID_PAGE) parts.push(spec.keys.slice(i, i + GRID_PAGE));

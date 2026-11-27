@@ -7,12 +7,16 @@
 //    off it is, and in a line what it means when something wants attention.
 //  - g: the phone's lateral and long g, rings at 0.5 and 1.0 g, the last 10 s as a fading trail, and
 //    this drive's peaks marked on each axis (hist.peak).
+//  - gtoday, gdays: the grip used, from the hub: each 15 minutes of today (each day of the last 30)
+//    as a diamond out to its hardest accel, braking, left and right, newest brightest, the record
+//    each way marked (drawGEnvelope, from the phone's 5 s rows: recorder.js).
 // Both read the 25-a-second rings (hist.fast); the numbers on top are the newest, steadied over a
 // moment so they read at a glance.
 import { hist, FAST_HZ } from './hist.js';
 import { CHANNELS } from './channels.js';
 import { prep, themeOf, typeScale, font, text, line, signed } from './kit.js';
 import { glanceHead } from './glance_frame.js';
+import { trendData } from './trend_data.js';
 
 const F = hist.fast, clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
@@ -106,4 +110,48 @@ export function drawGCompass(cv) {
   text(g, `Peaks  L ${pk.l.toFixed(2)}  R ${pk.r.toFixed(2)}`, W.x + 5, W.y + fs + 3, f, T.label, 'left');
   text(g, `A ${pk.a.toFixed(2)}  B ${pk.b.toFixed(2)}`, W.x + W.w - 5, W.y + fs + 3, f, T.label, 'right');
   text(g, '10 s trail', W.x + 5, W.y + W.h - 6, f, T.label, 'left');
+}
+
+// Each bucket's hardest g each way, from the four peak channels' rows (trend_data.js: today's 15
+// minutes or the last 30 days): [{ at, a, b, l, r }] oldest first (all as g, 0 or more), and the
+// record each way over them all.
+export function gEnvelope(rowsOf) {
+  const by = new Map(), get = (id) => { if (!by.has(id)) by.set(id, { at: id, a: 0, b: 0, l: 0, r: 0 }); return by.get(id); };
+  const take = (key, side, pick) => { for (const x of rowsOf(key)) { const v = pick(x); if (Number.isFinite(v)) get(x.at ?? x.day)[side] = Math.max(0, v); } };
+  take('g_long_max', 'a', (x) => x.max);
+  take('g_long_min', 'b', (x) => -x.min);
+  take('g_lat_max', 'r', (x) => x.max);
+  take('g_lat_min', 'l', (x) => -x.min);
+  const buckets = [...by.values()].sort((x, y) => (x.at < y.at ? -1 : 1));
+  const peak = { a: 0, b: 0, l: 0, r: 0 };
+  for (const k of Object.keys(peak)) peak[k] = Math.max(0, ...buckets.map((x) => x[k]));
+  return { buckets, peak };
+}
+
+export function drawGEnvelope(cv, kind) {
+  const c = prep(cv); if (!c) return;
+  const [g, w, h] = c, T = themeOf(cv), Z = typeScale(w, h), gs = (x) => (x ? x.toFixed(2) : '-');
+  const { buckets, peak } = gEnvelope((key) => trendData(kind, key).rows);
+  const { p, top } = glanceHead(cv, g, w, h, T, Z, [['Corner', gs(Math.max(peak.l, peak.r)), 'g'], ['Braking', gs(peak.b), 'g']], ['8.88']);
+  const W = windowAt(g, T, w, h, p, top), max = Math.max(1.2, ...Object.values(peak)) * 1.05, k = W.r / max, ink = T.chartLine || T.fg;
+  const P = (x, y) => [W.cx + x * k, W.cy - y * k];
+  g.save(); g.beginPath(); g.arc(W.cx, W.cy, W.r, 0, 7); g.clip();
+  for (const r of [0.5, 1]) { g.strokeStyle = T.grid; g.lineWidth = 1.5; g.beginPath(); g.arc(W.cx, W.cy, r * k, 0, 7); g.stroke(); }
+  line(g, W.cx - W.r, W.cy, W.cx + W.r, W.cy, T.grid); line(g, W.cx, W.cy - W.r, W.cx, W.cy + W.r, T.grid);
+  buckets.forEach((x, i) => {                                                  // oldest faint, newest bright
+    g.globalAlpha = 0.15 + 0.85 * ((i + 1) / buckets.length);
+    g.strokeStyle = ink; g.lineWidth = 2; g.beginPath();
+    [[0, x.a], [x.r, 0], [0, -x.b], [-x.l, 0]].forEach(([a, b], j) => { const [u, v] = P(a, b); if (j) g.lineTo(u, v); else g.moveTo(u, v); });
+    g.closePath(); g.stroke();
+  });
+  g.globalAlpha = 1;
+  g.fillStyle = T.red; for (const [x, y] of [[-peak.l, 0], [peak.r, 0], [0, peak.a], [0, -peak.b]]) { if (!(Math.abs(x) + Math.abs(y))) continue; const [a, b] = P(x, y); g.beginPath(); g.arc(a, b, 3.5, 0, 7); g.fill(); }
+  g.restore();
+  const f = small(T, Z), fs = Math.max(10, Math.min(13, Z.lbl * 1.05));
+  for (const r of [0.5, 1]) text(g, `${r.toFixed(1)} g`, W.cx + r * k + 3, W.cy - 3, font(T, Math.max(9, fs - 2), 600), T.label, 'left');
+  text(g, 'Accel', W.cx, W.cy - W.r - 4, f, T.label, 'center');
+  text(g, 'Braking', W.cx, W.cy + W.r + fs + 2, f, T.label, 'center');
+  text(g, `Most  L ${peak.l.toFixed(2)}  R ${peak.r.toFixed(2)}`, W.x + 5, W.y + fs + 3, f, T.label, 'left');
+  text(g, `A ${peak.a.toFixed(2)}  B ${peak.b.toFixed(2)}`, W.x + W.w - 5, W.y + fs + 3, f, T.label, 'right');
+  text(g, buckets.length ? (kind === 'today' ? 'Today, each 15 min' : 'Last 30 days, each day') : 'No g saved yet', W.x + 5, W.y + W.h - 6, f, T.label, 'left');
 }

@@ -3,7 +3,7 @@
 // last hour (the trends function), today in 15-minute buckets (trend_today) and the last 30 days by day
 // (trend_days). Views read it every
 // frame, so a read never waits: it gives what is held and refreshes it behind the scenes.
-import { CHANNELS, reading } from './channels.js';
+import { CHANNELS, G_PEAKS, reading } from './channels.js';
 
 const KEEP_MS = { hour: 30_000, today: 60_000, days: 300_000 };
 const held = new Map();
@@ -30,7 +30,7 @@ async function fetchKind(kind, key) {
     const r = await source.call('trends', { bridge, minutes: 60, fields: [key] });
     return { rows: (r.rows || []).map((x) => ({ t: new Date(x.t).getTime(), v: counts(key, x[key]) })).filter((x) => x.v !== null) };
   }
-  const ch = CHANNELS[key], [lo, hi] = ch.trend?.valid || ch.valid || [-1e6, 1e6];
+  const ch = CHANNELS[key] || G_PEAKS[key], [lo, hi] = ch.trend?.valid || ch.valid || [-1e6, 1e6];
   if (kind === 'today') {
     const r = await source.call('trend_today', { bridge, key, lo, hi, running: true });
     return { rows: (r.buckets || []).map((b) => ({ at: new Date(b.at).getTime(), min: b.min, max: b.max, avg: b.avg, n: Number(b.n) })) };
