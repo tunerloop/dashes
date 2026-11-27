@@ -16,7 +16,7 @@ const GLANCES = [['recent', 'Last 15 min'], ['today', 'Today'], ['days', 'Last 3
 
 // [{ where: 'panel'|'full', kind: 'box'|'graphs'|'detail', level, view?, name }] for a box spec.
 export function pageList(spec) {
-  if (spec.kind === 'big' && CHANNELS[spec.key]?.vdo) {
+  if ((spec.kind === 'big' || spec.kind === 'gauge') && CHANNELS[spec.key]?.vdo) {   // a VDO dial: oil temp's row of pages
     const glances = CHANNELS[spec.key].phone ? GLANCES.slice(0, 1) : GLANCES;   // the hub keeps no history of the phone's own readings
     return [
       { where: 'panel', kind: 'box', level: null, name: 'Dial' },
@@ -65,7 +65,7 @@ export function makePageView(spec, page) {
   box.el.hidden = false;
   el.append(box.el);
   // Full screen held upright: the box takes the top half and its chart the bottom (DETAILS[id].under).
-  const under = page.where === 'full' && DETAILS[id]?.under ? canvas('under') : null;
+  const under = page.where === 'full' && page.kind === 'box' && DETAILS[id]?.under ? canvas('under') : null;   // not under a graphs page
   if (under) el.append(under);
   return {
     el, page, box,

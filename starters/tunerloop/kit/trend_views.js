@@ -76,15 +76,15 @@ export function drawGlance(cv, key, most = 900) {
   // Drawn in bins of B seconds (about 90 points), so a busy reading stays readable over 15 minutes:
   // each bin's average as the line, and for a pressure its lowest dashed (a dip stays seen).
   const B = binSize(secs), bins = binSeries((k) => vals[k], n, B), span = Math.max(2, Math.ceil(secs / B));
-  const at = (k) => bins.avg[k] ?? NaN, under = base.kind === 'pressure' ? (k) => bins.min[k] ?? NaN : null;
+  const style = glanceStyle(base), at = (k) => bins.avg[k] ?? NaN, under = style.recentEdge ? (k) => bins[style.recentEdge][k] ?? NaN : null;
   const rawBreaks = hist.breaks('slow', secs), breaks = rawBreaks.map((b) => ({ ...b, k: b.k < 0 ? b.k : Math.floor(b.k / B) }));
-  const cells = base.kind === 'speed' ? [cell('Max', v, hi), cell('Avg', v, avg)] : !temp ? [cell('Min', v, lo), cell('Max', v, hi)]
-    : [['Trend', s && s.rate !== null ? signed(delta(s.rate * 60), 0) : '-', `${ch.unit}/min`],
-      warming ? ['Warm in', etaText(s.warmS), '', 'cold'] : cell('Max', v, hi)];
+  const stat = { min: lo, max: hi, avg };
+  const cells = temp ? [['Trend', s && s.rate !== null ? signed(delta(s.rate * 60), 0) : '-', `${ch.unit}/min`],
+    warming ? ['Warm in', etaText(s.warmS), '', 'cold'] : cell('Max', v, hi)] : style.recent.map(([k, name]) => cell(name, v, stat[k]));
   const { extra, second } = glanceAdds(v, n, B);
   const tip = ringTip(ch, rawBreaks);
   glanceFrame(cv, key, {
-    cells, widest: temp ? ['+88', '8:88', wide(v)] : [wide(v)], warming, span, vals: [...bins.avg, ...(under ? bins.min : []), ...extra.vals], at, under, breaks,
+    cells, widest: temp ? ['+88', '8:88', wide(v)] : [wide(v)], warming, span, vals: [...bins.avg, ...(under ? bins[style.recentEdge] : []), ...extra.vals], at, under, breaks,
     timeLabel: gapText(secs * 1000), tip: (k, val) => tip(k * B, val), now: s ? conv(s.now) : null, extra: extra.series, second, seconds: secs,
   });
 }
@@ -107,9 +107,18 @@ function glanceAdds(v, n, B) {
   return { extra, second };
 }
 
-// What a channel's glance pages lead with. A temperature: how fast it climbs and its highest, then
-// its highest and average. A pressure, where low is the danger: its lowest and highest, then its
-// lowest and average. Anything else (the battery): its lowest and highest.
+// What a channel's glance pages lead with, by kind (the dash's ranges may name one with glance.style):
+// recent and stored, the two numbers on top ([stat, name]); recentEdge and edge, the side drawn
+// dashed (a bin's or bucket's max or min). A temperature leads with how fast it climbs (drawGlance)
+// and its highest; a pressure, where low is the danger, with its lowest; revs with their peak.
+const STYLES = {
+  temperature: { recent: [['max', 'Max']], stored: [['max', 'Max'], ['avg', 'Avg']], recentEdge: null, edge: 'max' },
+  pressure: { recent: [['min', 'Min'], ['max', 'Max']], stored: [['min', 'Min'], ['avg', 'Avg']], recentEdge: 'min', edge: 'min' },
+  speed: { recent: [['max', 'Max'], ['avg', 'Avg']], stored: [['max', 'Max'], ['avg', 'Avg']], recentEdge: null, edge: 'max' },
+  peak: { recent: [['max', 'Peak'], ['avg', 'Avg']], stored: [['max', 'Peak'], ['avg', 'Avg']], recentEdge: 'max', edge: 'max' },
+  range: { recent: [['min', 'Min'], ['max', 'Max']], stored: [['min', 'Min'], ['max', 'Max']], recentEdge: null, edge: 'min' },
+};
+const glanceStyle = (base) => STYLES[base.glance?.style] || STYLES[base.kind] || STYLES.range;
 const isTemp = (base) => base.kind === 'temperature';
 function cell(k, v, x) { return [k, x === null || x === undefined || !Number.isFinite(x) ? '-' : x.toFixed(v.ch.dp ?? 0), v.ch.unit]; }
 // The widest a channel's number gets in display units, as 8s, so the size step holds still.
@@ -121,10 +130,9 @@ function widestText(v) { return [v.base.min, v.base.max].map((x) => Math.abs(v.c
 // buckets simply follow each other (the days driven, so a day at home doesn't chop the 30 days up).
 function glanceBuckets(cv, key, d, stepMs, timeLabel, when, gaps = true) {
   const v = view(key), { ch, conv, base } = v, { pts, breaks: all } = bucketSeries(d.rows, stepMs), breaks = gaps ? all : [], sum = bucketSummary(pts);
-  const temp = isTemp(base), edge = temp ? 'max' : 'min', edgeName = temp ? 'Max' : 'Min', c = (k) => (sum ? conv(sum[k]) : null);
+  const style = glanceStyle(base), edge = style.edge, edgeName = edge === 'max' ? 'Max' : 'Min', c = (k) => (sum ? conv(sum[k]) : null);
   const at = (k) => (k < pts.length ? conv(pts[k].avg) : NaN), side = (k) => (k < pts.length ? conv(pts[k][edge] ?? pts[k].avg) : NaN);
-  const cells = temp ? [cell('Max', v, c('max')), cell('Avg', v, c('avg'))] : base.kind === 'pressure' ? [cell('Min', v, c('min')), cell('Avg', v, c('avg'))]
-    : [cell('Min', v, c('min')), cell('Max', v, c('max'))];
+  const cells = style.stored.map(([k, name]) => cell(name, v, c(k)));
   glanceFrame(cv, key, {
     cells, widest: [widestText(v)], warming: false, span: Math.max(2, pts.length), vals: pts.flatMap((q) => [conv(q.avg), conv(q[edge] ?? q.avg)]), at, breaks,
     timeLabel, tip: (k, val) => [when(pts[k]), `Avg ${valText(ch, val)}`, `${edgeName} ${valText(ch, side(k))}`], under: side,
@@ -141,15 +149,17 @@ function glanceDays(cv, key) {
 }
 
 // The dashed lines across a glance chart, from the dash's zones: a temperature's warm-up point
-// (Warm), and each red zone's edge: Low where it starts at the bottom of the scale, else Hot (a
-// temperature) or High. While warming up only Warm shows.
+// (Warm), a shift point (Shift), and each red zone's edge: Low where it starts at the bottom of the
+// scale, else Hot (a temperature), High, or the dash's own name for it (glance.redLabel: Redline).
+// While warming up only Warm shows.
 export function zoneLines(v, T, warming = false) {
   const { base, conv, ch } = v, out = [], fmt = (x) => conv(x).toFixed(ch.dp ?? 0), warm = isTemp(base) ? warmAt(base) : null;
   if (warm !== null) out.push({ v: conv(warm), color: T.cold, label: `Warm ${fmt(warm)}` });
   if (warming) return out;
+  if (Number.isFinite(base.shift)) out.push({ v: conv(base.shift), color: T.warn || T.cold, label: `Shift ${fmt(base.shift)}` });
   for (const [lo, hi] of base.red || []) {
     if (lo <= base.min + 1e-9) out.push({ v: conv(hi), color: T.red, label: `Low ${fmt(hi)}` });
-    else out.push({ v: conv(lo), color: T.red, label: `${isTemp(base) ? 'Hot' : 'High'} ${fmt(lo)}` });
+    else out.push({ v: conv(lo), color: T.red, label: `${base.glance?.redLabel || (isTemp(base) ? 'Hot' : 'High')} ${fmt(lo)}` });
   }
   return out;
 }

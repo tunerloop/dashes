@@ -19,12 +19,13 @@ export const RANGES = {
   // The redline: the rev limit of the car this dash was built on (7500 rpm, ignition cut) to the end of the scale, until
   // the app sends the tune's (index.js redlineRanges; the Pull view's shift light 800 rpm before it).
   // The real VDO tach prints neither 0 nor 8: left off in Vintage 3D.
-  rpm: { red: [[7500, 8000]], shift: 6700, dial: { bare: [0, 8] } },
+  // vdo on the tach: its dial (a gauge box) gets the graphs pages, led by its peak, throttle beside it.
+  rpm: { red: [[7500, 8000]], shift: 6700, dial: { bare: [0, 8] }, vdo: true, glance: { style: 'peak', second: 'tps_pct', redLabel: 'Redline' } },
   lambda1: { note: 'cyl 1-3', valid: LAMBDA_VALID, red: [[1.15, 1.4]], warn: [[0.6, 0.75]] },
   lambda2: { note: 'cyl 4-6', valid: LAMBDA_VALID, red: [[1.15, 1.4]], warn: [[0.6, 0.75]] },
   // ect_c is the cylinder head on this engine. Falling fast is shock cooling (air-cooled aircraft
   // monitors: Lycoming says under 50 deg F, 27.8 deg C, a minute).
-  ect_c: { red: [[210, 250]], warn: [[180, 210]], cooling: [16.7, 27.8], trend: { span: 20 } },
+  ect_c: { red: [[210, 250]], warn: [[180, 210]], cooling: [16.7, 27.8], trend: { span: 20 }, vdo: true, dialLabel: 'HEAD {unit}' },
   iat_c: { red: [[65, 80]], warn: [[50, 65]] },
   // vdo: a VDO dial box, with the graphs pages (pages.js); dialLabel the name on its face.
   battery_v: { red: [[10, 11.8], [15.2, 16]], warn: [[11.8, 12.4]], trend: { span: 1, valid: [8, 18] }, vdo: true, dialLabel: 'VOLTS', dial: { steps: 4 } },

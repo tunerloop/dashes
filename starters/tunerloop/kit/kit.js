@@ -145,7 +145,12 @@ export function trace(g, T, x, y, w, h, o) {
   for (const l of o.levels || []) { const [, ly] = P(0, l.v); line(g, x, ly, x + w, ly, l.color, 1.5, [6, 5]); }   // dashed marks across, e.g. warm-up and max
   g.restore();
   const lx = o.levelsLeft ? x + 5 : x + w - 5;   // the levels' labels: right, or left where something else sits on the right
-  for (const l of o.levels || []) if (l.label) { const [, ly] = P(0, l.v), fl = clamp(Math.min(w, h) * 0.07, 9, 12); text(g, l.label, lx, ly + (ly - y < fl * 1.6 ? fl + 3 : -4), font(T, fl, 600), l.color, o.levelsLeft ? 'left' : 'right'); }
+  const fl = clamp(Math.min(w, h) * 0.07, 9, 12), taken = [];   // a label sits over its line, or under it when that would crowd the top or a label already there
+  for (const l of [...(o.levels || [])].filter((q) => q.label).sort((a, b) => P(0, a.v)[1] - P(0, b.v)[1])) {
+    const [, ly] = P(0, l.v), over = ly - 4, under = ly + fl + 3, clash = (ty) => taken.some((t) => Math.abs(t - ty) < fl * 1.15);
+    const ty = ly - y >= fl * 1.6 && !clash(over) ? over : !clash(under) ? under : over;
+    taken.push(ty); text(g, l.label, lx, ty, font(T, fl, 600), l.color, o.levelsLeft ? 'left' : 'right');
+  }
   const fs = clamp(Math.min(w, h) * 0.08, 9, 13), secs = o.timeLabel ?? `${o.seconds ?? Math.round(span / 25)} s`;
   for (const gv of o.grid || []) if (o.gridLabel) { const [, b] = P(span - 1, gv); text(g, o.gridLabel(gv), x + 5, b - 3, font(T, fs, 500), T.label); }
   text(g, secs, x + 5, y + h - 5, font(T, fs, 600), T.label);
