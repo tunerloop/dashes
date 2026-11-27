@@ -48,9 +48,18 @@ const ease = (cur, target, dtMs, tauMs = 70) => (cur === null || tauMs <= 0 ? ta
 // Where a dial's numbers go: every step (the channel's dial step, display units), with three small
 // ticks between numbers, one at halfway (Steve, 2026-11-27: three at least, an odd number; a dash's
 // dial.steps overrides for an exception). A face has
-// room for about 20 characters of numbers round it: past that it numbers every other long tick (km/h
+// room for about 21 characters of numbers round it: past that it numbers every other long tick (km/h
 // every 40, kPa every 200; mph, psi, deg F and the tach keep every step).
-export const DIAL_CHARS = 20;
+export const DIAL_CHARS = 21;   // mph to 160 (21) keeps every 20; kPa (22) and km/h double up
+
+// A dial's zones (display units), a zone that runs to the end of the channel's scale running to the
+// end of the dial too: the dial rounds its ends out to whole numbers (deg F: 176 shows as 180), and
+// the last tick belongs in the zone (Steve, 2026-11-27: IAT's 180 red). base: the channel; ch: shown.
+export function dialZones(base, ch) {
+  const lo = ch.value(base.min), hi = ch.value(base.max), eps = 1e-6;
+  const fit = (zs) => (zs || []).map(([a, b]) => [Math.abs(a - lo) < eps ? Math.min(a, ch.min) : a, Math.abs(b - hi) < eps ? Math.max(b, ch.max) : b]);
+  return { cold: fit(ch.cold), warn: fit(ch.warn), red: fit(ch.red) };
+}
 export const DIAL_STEPS = 4;
 export function dialNumbers(ch) {
   const { scale = 1 } = ch.dial;
@@ -67,14 +76,14 @@ export function makeGauge(key) {
   const { step, steps } = dialNumbers(ch), { scale } = ch.dial;
   const note = ch.dial.note || ch.note;            // x1000 on the tach; which cylinders on a lambda dial
   let ticks = '', nums = '', vdo = '';
-  const within = (zs, v) => (zs || []).some(([lo, hi]) => v >= lo - 1e-9 && v <= hi + 1e-9);
-  const inZone = (v) => within(ch.warn, v) || within(ch.red, v);
+  const Z = dialZones(base, ch), within = (zs, v) => (zs || []).some(([lo, hi]) => v >= lo - 1e-9 && v <= hi + 1e-9);
+  const inZone = (v) => within(Z.warn, v) || within(Z.red, v);
   const minor = step / steps;
   for (let i = 0, v = ch.min; v <= ch.max + 1e-9; i++, v = ch.min + i * minor) {
     const major = i % steps === 0;
     // minor ticks are drawn 12 long; each theme shows as much of a tick as it wants (stroke-dasharray, boxes.css)
     const [x0, y0] = pt(88, ang(v)), [x1, y1] = pt(major ? 73 : 76, ang(v));
-    const hot = inZone(v) ? ' hot' : within(ch.cold, v) ? ' cold' : '';   // in a warn or red zone, or still cold: Vintage colours the tick instead of drawing the arc
+    const hot = inZone(v) ? ' hot' : within(Z.cold, v) ? ' cold' : '';   // in a warn or red zone, or still cold: Vintage colours the tick instead of drawing the arc
     ticks += `<line class="${major ? 'tk' : 'tm'}${hot}" x1="${f1(x0)}" y1="${f1(y0)}" x2="${f1(x1)}" y2="${f1(y1)}"/>`;
     if (major) {
       const label = +(v / scale).toFixed(2);
@@ -84,7 +93,7 @@ export function makeGauge(key) {
       vdo = vdo === null ? null : (() => { const g = vdoNumber(label, x, y); return g ? `${vdo}<g class="${bare.trim()}">${g}</g>` : null; })();
     }
   }
-  const zones = [...(ch.cold || []).map((z) => ['cold', z]), ...(ch.warn || []).map((z) => ['warn', z]), ...(ch.red || []).map((z) => ['red', z])]
+  const zones = [...Z.cold.map((z) => ['cold', z]), ...Z.warn.map((z) => ['warn', z]), ...Z.red.map((z) => ['red', z])]
     .map(([c, [lo, hi]]) => `<path class="zone ${c}" d="${arc(84, ang(lo), ang(hi))}"/>`).join('');
   // dialLabel: the name on the face, with {unit} where the unit goes; then the LCD shows the number alone
   const unitOnFace = !!ch.dialLabel?.includes('{unit}'), lcdUnit = unitOnFace ? '' : ch.unit;

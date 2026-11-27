@@ -7,6 +7,8 @@ import { CHANNELS, shown } from './channels.js';
 import { steadyText } from './steady.js';
 import { prep } from './kit.js';
 
+const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+
 export function makeG() {
   const el = document.createElement('div');
   el.className = 'box gmeter';
