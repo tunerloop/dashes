@@ -30,11 +30,20 @@ export function pageList(spec) {
       ...glances.map(([view, name], level) => ({ where: 'full', kind: 'graphs', level, view, name })),
     ];
   }
+  if (spec.kind === 'grid' && spec.keys?.length > GRID_PAGE) {   // All numbers: 3 by 3 a panel page, every one full screen
+    const parts = [];
+    for (let i = 0; i < spec.keys.length; i += GRID_PAGE) parts.push(spec.keys.slice(i, i + GRID_PAGE));
+    return [
+      ...parts.map((keys, i) => ({ where: 'panel', kind: 'box', level: null, name: `${spec.name} ${i + 1}`, keys })),
+      { where: 'full', kind: 'box', level: 0, name: spec.name, keys: spec.keys },
+    ];
+  }
   return [
     { where: 'panel', kind: 'box', level: null, name: spec.name || '' },
     { where: 'full', kind: 'box', level: 0, name: spec.name || '' },
   ];
 }
+const GRID_PAGE = 9;
 
 // Hand a box its share of this frame's readings. ctx: { value, dt, smoothMs }.
 export function feed(box, spec, ctx) {
@@ -48,7 +57,7 @@ export function makePageView(spec, page) {
   const el = document.createElement('div');
   el.className = `page page-${page.kind}`;
   el.hidden = true;
-  const box = page.kind === 'graphs' ? makeGlance(spec.key, page.view) : makeBox(spec);
+  const box = page.kind === 'graphs' ? makeGlance(spec.key, page.view) : makeBox(page.keys ? { ...spec, keys: page.keys } : spec);
   box.el.hidden = false;
   el.append(box.el);
   return {

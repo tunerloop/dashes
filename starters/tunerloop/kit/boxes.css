@@ -122,12 +122,16 @@
 .dash .alarm { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; }
 
 /* ---------------------------------------------------------------- every number */
-.grid { display: grid; align-items: stretch; justify-content: stretch; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 1fr; font-family: var(--d-font); }
-.grid .cell { border: solid var(--d-grid); border-width: 0 1px 1px 0; display: flex; flex-direction: column; justify-content: center; padding: 0 3cqmin; min-height: 0; }
-.grid .k { text-align: center; color: var(--d-label); font-size: var(--t-lbl); line-height: 1.15; white-space: nowrap; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }   /* one row: long names use their short form (channels.js short) */
-.grid .n { display: flex; justify-content: flex-end; align-items: baseline; color: var(--d-value); font-size: var(--t-small); line-height: 1.05; font-weight: 700; font-style: var(--d-value-style); font-variant-numeric: tabular-nums; }
-.grid .u { color: var(--d-label); font-size: var(--t-lbl); margin-left: 1cqmin; font-weight: 600; min-width: calc(var(--uw, 0) * 0.62em); text-align: left; }
+.grid { display: grid; align-items: stretch; justify-content: stretch; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 1fr; gap: 2cqmin; padding: 3cqmin; font-family: var(--d-font);
+  --cell-h: calc((100cqh - 6cqmin - (var(--rows, 3) - 1) * 2cqmin) / var(--rows, 3));
+  --num: min(calc(var(--cell-h) * 0.5), calc((100cqw - 10cqmin) / 3 * 0.31)); }   /* the number: from the row's height, held to four characters in a third of the width */
+.grid .cell { display: flex; flex-direction: column; justify-content: center; gap: 1cqmin; min-height: 0; min-width: 0; }
+.grid .k { text-align: center; color: var(--d-label); font-size: min(var(--t-lbl), calc(var(--num) * 0.42)); line-height: 1.15; white-space: nowrap; overflow: hidden; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }   /* one row: long names use their short form (channels.js short) */
+.grid .n { position: relative; display: flex; justify-content: center; align-items: baseline; white-space: nowrap; overflow: hidden; padding: 0.14em 0.25em 0.08em; border-radius: 1.5cqmin; color: var(--d-value); font-size: var(--num); line-height: 1.05; font-weight: 700; font-style: var(--d-value-style); font-variant-numeric: tabular-nums; }
+.grid .u { position: absolute; top: 0.3em; right: 0.45em; color: var(--d-label); font-size: 0.26em; font-weight: 600; line-height: 1; }   /* the unit small in the corner: the number has the window's width */
 .grid .n .v { min-width: 0; }
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .grid .n { color: var(--d-lcd); background: var(--d-lcd-bg); box-shadow: inset 0 0 0 0.5cqmin #0b0503; }   /* an LCD window, like a dial's */
+.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .grid .u { color: var(--d-lcd); opacity: 0.75; }
 
 /* ---------------------------------------------------------------- chart tips (canvas_tip.js) */
 /* The mouse over a chart (charts.js hoverTip): a line at that moment and a label with its time and values */

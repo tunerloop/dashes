@@ -190,13 +190,16 @@ export function makeGlance(key, view = 'recent') {
 }
 
 // Every channel the car sends, as a grid of numbers.
+// Readings as a table of LCD windows, three across: each its name over a window with the number in it
+// (amber in the Vintage styles, like a dial's LCD). The number is sized from the rows the table has
+// (boxes.css --rows), so a page of 3 by 3 reads at a glance (Steve, 2026-11-27: at most 3 by 3 in a
+// panel) and fewer get bigger still. Numbers sit flush right against a unit slot as wide as the
+// column's longest unit, so nothing moves when a value grows a digit.
 export function makeGrid(keys) {
   const view = Object.fromEntries(keys.map((k) => [k, shown(CHANNELS[k])]));
   const el = document.createElement('div');
   el.className = 'box grid';
-  // A table: labels flush left, numbers flush right against a unit slot as wide as the column's
-  // longest unit, so down a column every number ends, and every unit starts, at the same x, and
-  // nothing moves when a value grows a digit.
+  el.style.setProperty('--rows', Math.max(1, Math.ceil(keys.length / 3)));
   const COLS = 3, unitW = [0, 0, 0];
   keys.forEach((k, i) => { unitW[i % COLS] = Math.max(unitW[i % COLS], view[k].unit.length); });
   el.innerHTML = keys.map((k, i) => `<div class="cell" data-k="${k}" style="--uw:${unitW[i % COLS]}"><div class="k">${esc(view[k].short || view[k].label)}</div>

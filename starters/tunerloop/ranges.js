@@ -27,14 +27,14 @@ export const RANGES = {
   // ect_c is the cylinder head on this engine. Falling fast is shock cooling (air-cooled aircraft
   // monitors: Lycoming says under 50 deg F, 27.8 deg C, a minute).
   ect_c: { red: [[210, 250]], warn: [[180, 210]], cooling: [16.7, 27.8], trend: { span: 20 }, vdo: true, dialLabel: 'HEAD {unit}' },
-  iat_c: { red: [[65, 80]], warn: [[50, 65]] },
+  iat_c: { red: [[65, 80]], warn: [[50, 65]], vdo: true, dialLabel: 'AIR {unit}', trend: { span: 10 } },
   // vdo: a VDO dial box, with the graphs pages (pages.js); dialLabel the name on its face.
   battery_v: { red: [[10, 11.8], [15.2, 16]], warn: [[11.8, 12.4]], trend: { span: 1, valid: [8, 18] }, vdo: true, dialLabel: 'VOLTS' },
   // glance: what else its charts draw (kit/trend_views.js): revMin the least that's normal for the
   // revs (the Oil Envelope's rule, OIL below), second another channel on its own scale.
   oil_kpa: { red: [[0, 100]], vdo: true, dialLabel: 'OIL {unit}', trend: { span: 100 }, glance: { revMin: true } },
   speed_kmh: { vdo: true, dialLabel: '{unit}', trend: { span: 20 }, glance: { second: 'tps_pct' } },
-  fuel_kpa: { red: [[0, 250]] },
+  fuel_kpa: { red: [[0, 250]], vdo: true, dialLabel: 'FUEL {unit}', trend: { span: 50 } },
   // 248 and 230 deg F: an air-cooled six's usual limits. Warming up: under 60 deg C,
   // from the dial's start. The dial prints no number on its first tick, like the tach's 0, and its name
   // with the unit on the face (the LCD shows just the number).
