@@ -1,4 +1,4 @@
-// kit/phone_boxes.js: the app's kit/phone_boxes.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/phone_boxes.js: the app's kit/phone_boxes.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // Car tab boxes fed by the phone (sensors.js), not the car: Speed (GPS), the G meter (accelerometer)
 // and the Pull view the Hard acceleration mode shows (RPM, speed and the 0-60 / 50-70 timer from
 // runs.js). They take the whole reading, which the app's Car tab (js/dash/car_tab.js) extends with speed_kmh, g_lat, g_long and

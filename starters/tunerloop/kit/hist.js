@@ -1,4 +1,4 @@
-// kit/hist.js: the app's kit/hist.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/hist.js: the app's kit/hist.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // A short history of the live reading on the phone, for the Car tab's detail views (the 10 s and
 // 30 s charts, the compass cloud, the G trail, the temperature trends). Fast channels are sampled
 // 25 times a second for 30 s; slow ones once a second for 15 minutes. A missing value is NaN. Peak g for this drive is kept too.

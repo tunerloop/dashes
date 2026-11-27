@@ -16,9 +16,9 @@ export const LAMBDA_PARKED = 1.26;   // a bank reading this or more is a parked 
 export const WARM_BELOW_C = 60;
 
 export const RANGES = {
-  // The redline: from the tune's rev limit (7500 rpm, ignition cut, as-found tune) to the end of the
-  // scale. The real VDO tach prints neither 0 nor 8: left off in Vintage 3D. The Pull view's shift
-  // light comes on at 6700.
+  // The redline: the 914's rev limit as found (7500 rpm, ignition cut) to the end of the scale, until
+  // the app sends the tune's (index.js redlineRanges; the Pull view's shift light 800 rpm before it).
+  // The real VDO tach prints neither 0 nor 8: left off in Vintage 3D.
   rpm: { red: [[7500, 8000]], shift: 6700, dial: { bare: [0, 8] } },
   lambda1: { note: 'cyl 1-3', valid: LAMBDA_VALID, red: [[1.15, 1.4]], warn: [[0.6, 0.75]] },
   lambda2: { note: 'cyl 4-6', valid: LAMBDA_VALID, red: [[1.15, 1.4]], warn: [[0.6, 0.75]] },

@@ -1,4 +1,4 @@
-// kit/icons.js: the app's kit/icons.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/icons.js: the app's kit/icons.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // Line icons for the big-number boxes (24 x 24, drawn in the box's label colour). Original
 // drawings in the style of dashboard warning symbols.
 const P = {

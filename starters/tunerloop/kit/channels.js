@@ -1,4 +1,4 @@
-// kit/channels.js: the app's kit/channels.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/channels.js: the app's kit/channels.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // The car's live channels, as true for any car: label, short name, unit, decimals, how a value
 // converts for display (kind, units.js), the icon a big-number box shows, and a plain scale (min, max,
 // the dial's step) so a dial or chart can be drawn at all. Keys are the Bridge's live keys (ecuai

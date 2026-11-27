@@ -1,4 +1,4 @@
-// kit/trend_views.js: the app's kit/trend_views.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/trend_views.js: the app's kit/trend_views.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // The value panels' charts (battery, head temp, oil temp): the last minute along the bottom of the
 // panel, then full screen the last hour and the last 30 days by day, each with now, min, max, and the
 // trend of the current climb or fall (trend_rules.js runTrend). Time with no data takes no room: each gap is one small mark with its length.

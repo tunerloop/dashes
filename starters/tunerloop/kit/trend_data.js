@@ -1,4 +1,4 @@
-// kit/trend_data.js: the app's kit/trend_data.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/trend_data.js: the app's kit/trend_data.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // The value panels' stored history, fetched when a view first needs it and kept for a while: the
 // last hour (the trends function) and the last 30 days by day (trend_days). Views read it every
 // frame, so a read never waits: it gives what is held and refreshes it behind the scenes.

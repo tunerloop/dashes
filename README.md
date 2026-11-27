@@ -19,9 +19,9 @@ In the app: **Settings, Car tab dash, More dashes**, then **Add**. The Car tab r
 3. **Give it its own `id` and `name`** in its `dash.json`.
 4. **Open the repo in Claude Code** and say what you want. `CLAUDE.md` tells Claude the rules.
 5. **Pack and push:** `node tools/pack.mjs` checks the dash the way the app will and writes its `dash.bundle.json`, the one file the app fetches. Commit both and push.
-6. **Point your phone at it:** in the app, **Settings, Car tab dash, Building a dash**, paste your dash folder's GitHub address (like `https://github.com/you/dashes/tree/main/dashes/my-dash`), and tap **Use**.
+6. **Point your phone at it:** in the app, **Settings, Car, Dash, Build your own**, paste your dash folder's GitHub address (like `https://github.com/you/dashes/tree/main/dashes/my-dash`), and tap **Use**.
 
-Then keep going: ask Claude for a change, pack, push, and open the Car tab again (or reload the app). Each time the Car tab opens it checks for a newer commit and runs it, keeping the settings you chose. That's the whole loop.
+Then keep going: ask Claude for a change, pack, push, and open the Car tab again (or reload the app). Each time the Car tab opens it checks for a newer commit and runs it, keeping what the dash saved (its settings among them). That's the whole loop.
 
 To share it, open a pull request against this repo. Once it's merged it shows up in everyone's **More dashes**.
 
@@ -61,8 +61,7 @@ my-dash/
 | `entry` | default `index.js` |
 | `styles` | up to 8 `.css` files in the package, in this order |
 | `basedOn` | `{ "id", "version" }` of the dash you copied, or leave it out |
-| `settings` | up to 12, shown in Settings under the dash: `{ "name": { "type": "channel" \| "channels" \| "number" \| "text" \| "boolean" \| "choice", "label", "default", "min", "max", "options", "labels" } }` |
-| `feeds` | extra data: `history` (the phone's recent readings at start), `rows` (the live chart's readings), `trend` (the last 2 hours) |
+| `feeds` | extra data: `history` (the phone's recent readings at start), `rows` (the live chart's readings), `trend` (the last 2 hours), `tune` (a few values from the car's tune) |
 
 `tools/manifest.js` (the app's own check, copied) is the exact check; `node tools/pack.mjs` runs it. The limits on a package: 64 files and 1.5 MB in all; only `dash.json`, `.js`, and `.css` files are read.
 
@@ -73,7 +72,8 @@ my-dash/
 | | |
 |---|---|
 | `api.root` | The element to draw in. It gets every touch. |
-| `api.settings` | The person's settings for this dash, defaults filled in. Changing one in Settings starts the dash again. |
+| `api.on('settings', fn)` | Your dash has settings of its own. Listening for this puts the app's gear over your dash (top left, shown with the tab bar); a tap hides the tab bar and calls `fn`: open your settings, drawn by your dash (not a `<form>`: the sandbox blocks submitting one), and keep them in `api.store`. The app has no settings for a dash. `dashes/big-numbers` is a short example. |
+| `api.tune`, `api.on('tune', (tune) => ...)` | With feed `tune`: values from the car's tune, read-only, or `null` until the app has the tune (and in test mode). Now `{ rev_limit }`: the highest rpm in the rev limit table. Use it as a default the driver can override in your settings. The event comes after a new tune read. |
 | `api.units`, `api.on('units', (units) => ...)` | The person's display units (`{ pressure: 'psi', temperature: 'f', speed: 'mph', mixture: 'lambda' }`), and when they change. |
 | `api.setUnit(kind, key)` | Ask the app to change a display unit (ours: a two-finger tap on a box). Kinds and keys: `pressure` (`kpa`, `bar`, `psi`), `temperature` (`c`, `f`), `speed` (`kmh`, `mph`), `mixture` (`lambda`, `afr`). The app checks it against its own table and answers with a `units` event. |
 | `api.bridge` | The chosen Bridge's name. |
@@ -87,7 +87,7 @@ my-dash/
 | `api.nav.show()`, `api.nav.hide()` | Bring the app's tab bar up, or put it away. You pick the gestures (ours: the first tap hides it). While it is hidden the app draws a small handle over your dash, on the edge the bar hid behind (bottom centre upright, right centre sideways, about 96 by 28 px), that brings it back; keep that spot clear. After `show()` the app hides it again after a few seconds. |
 | `api.on('outside', fn)` | A press in the app outside your frame (the tab bar), or the Car tab left: close a menu you opened. |
 | `api.request('trend', { name: 'trends', body: { minutes, fields } })` | Stored history, a promise: `{ rows }` for the last `minutes` (1 to 1440) of up to 13 channels, or with `{ name: 'trend_days', body: { key, lo, hi } }` 30 days of one channel by day, `{ today, days }`. Read-only. |
-| `api.store.get(k)`, `api.store.set(k, v)` | A small store kept on the phone for this dash: plain JSON values, up to 64 keys (names up to 40 characters) and 16 KB in all; `set(k, undefined)` removes a key. Treat what you read back as untrusted (check its type) so your dash always starts. It belongs to this exact set of files: a new version of an installed dash starts with a fresh store and settings. |
+| `api.store.get(k)`, `api.store.set(k, v)` | A small store kept on the phone for this dash: plain JSON values, up to 64 keys (names up to 40 characters) and 16 KB in all; `set(k, undefined)` removes a key. Treat what you read back as untrusted (check its type) so your dash always starts. It belongs to this exact set of files: a new version of an installed dash starts with a fresh store. |
 
 Reading keys: `rpm`, `map_kpa`, `tps_pct`, `ect_c`, `iat_c`, `lambda1`, `lambda2`, `lambda_target`, `battery_v`, `oil_kpa`, `fuel_kpa`, `ign_deg`, `oil_temp_c`, and from the phone `speed_kmh`, `g_lat`, `g_long`, `tilt_x`, `tilt_y`, and `run` (the acceleration timers). A value the car doesn't have is `null` or missing.
 
@@ -97,7 +97,7 @@ Draw on your own `requestAnimationFrame`, not on each reading. Everything else i
 
 The limits a dash draws and warns with are **the dash's own**, not the kit's. The kit's channel table (`kit/channels.js` `CHANNELS`) is true for any car: names, units, decimals, icons, and a plain scale to draw on. It has no red or amber zones, no valid ranges, and no notes about one engine.
 
-Ours (`starters/tunerloop/`) keeps its limits in one file, `ranges.js`: for each channel its red, amber, and cold zones, valid range, note, and what its dial prints (`RANGES`, in base units: rpm, kPa, °C, lambda, volts), plus the oil pressure envelope (`OIL`) and the warm-up point (`WARM_BELOW_C`). They start as the numbers for the car the dash was built on (an air-cooled 3.8 flat six on a Link G4X): edit them for your car in your copy of `starters/tunerloop/`. There are no settings for them. At mount ours applies them before anything is drawn:
+Ours (`starters/tunerloop/`) keeps its limits in one file, `ranges.js`: for each channel its red, amber, and cold zones, valid range, note, and what its dial prints (`RANGES`, in base units: rpm, kPa, °C, lambda, volts), plus the oil pressure envelope (`OIL`) and the warm-up point (`WARM_BELOW_C`). They start as the numbers for the car the dash was built on (an air-cooled 3.8 flat six on a Link G4X): edit them for your car in your copy of `starters/tunerloop/`. The redline follows the tune (`api.tune.rev_limit`) when the app has it; the rest have no settings. At mount ours applies them before anything is drawn:
 
 ```js
 useChannels(RANGES);       // this dash's limits onto the kit's table (kit/channels.js)

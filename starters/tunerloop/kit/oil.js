@@ -1,4 +1,4 @@
-// kit/oil.js: the app's kit/oil.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/oil.js: the app's kit/oil.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // The oil pressure envelope: the least oil pressure that's normal for the revs, in kPa. The default is
 // a common rule of thumb, about 10 psi (69 kPa) per 1000 rpm, flat from 5000 rpm; a dash sets its own
 // with useOil. The Oil Envelope (details.js) draws it and a dash's alarm may use it; the upper edge is

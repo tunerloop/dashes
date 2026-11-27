@@ -1,4 +1,4 @@
-// kit/d3defs.js: the app's kit/d3defs.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/d3defs.js: the app's kit/d3defs.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // Gradients and filters the Vintage 3D style draws with, shared by every dial (light from the upper left).
 // Filters use the dial's own units (userSpaceOnUse): sized to an element's box, a perfectly vertical
 // tick has a zero-wide box and the filter would erase it (the missing mark at 4).

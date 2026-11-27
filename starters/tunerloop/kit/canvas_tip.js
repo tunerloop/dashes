@@ -1,4 +1,4 @@
-// kit/canvas_tip.js: the app's kit/canvas_tip.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/canvas_tip.js: the app's kit/canvas_tip.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // The mouse over a chart drawn on a canvas (trend_views.js): a line at the nearest reading and a label
 // with its time and value, like the line charts' (charts.js hoverTip). A drawer adds a region per chart
 // each time it paints (prep in kit.js clears them), so the label follows the moment under the mouse as

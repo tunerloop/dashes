@@ -1,4 +1,4 @@
-// kit/units.js: the app's kit/units.js (web app 1.4.189) as forked with tunerloop-dash 1.0.0. Yours to change.
+// kit/units.js: the app's kit/units.js (web app 1.4.194) as forked with tunerloop-dash 1.0.0. Yours to change.
 // Display units: the choices for each kind of reading, the conversion from the base unit the car
 // sends (kPa, deg C, km/h, lambda), and the dial range in the chosen unit. Values, zones and valid
 // ranges stay in base units everywhere else; only what is shown is converted. The choice is per

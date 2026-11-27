@@ -7,49 +7,11 @@
   "license": "MIT",
   "description": "Two panels of gauges, each a row of pages into full screen, with automatic modes and alarms.",
   "entry": "index.js",
-  "settings": {
-    "style": {
-      "type": "choice",
-      "label": "Gauge style",
-      "options": [
-        "vintage3d",
-        "vintage",
-        "modern",
-        "race"
-      ],
-      "labels": [
-        "Vintage 3D",
-        "Vintage Flat",
-        "Modern",
-        "Race"
-      ],
-      "default": "vintage3d"
-    },
-    "auto_pull": {
-      "type": "boolean",
-      "label": "Auto: hard acceleration",
-      "default": true
-    },
-    "auto_corner": {
-      "type": "boolean",
-      "label": "Auto: cornering",
-      "default": true
-    },
-    "auto_stop": {
-      "type": "boolean",
-      "label": "Auto: stoplight",
-      "default": true
-    },
-    "auto_warm": {
-      "type": "boolean",
-      "label": "Auto: warm-up",
-      "default": true
-    }
-  },
   "feeds": [
     "history",
     "rows",
-    "trend"
+    "trend",
+    "tune"
   ],
   "styles": [
     "kit/themes.css",

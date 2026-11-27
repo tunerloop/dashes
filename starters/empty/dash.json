@@ -7,6 +7,5 @@
   "license": "MIT",
   "description": "What it shows, in one line.",
   "entry": "index.js",
-  "settings": {},
   "feeds": []
 }
