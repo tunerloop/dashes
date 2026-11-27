@@ -18,7 +18,24 @@ If you have no browser, skip step 3 and say so: the person's phone is then the o
 
 **Never ask the person to edit a file, run a command, or copy a file.** The one thing to ask for is what their phone says when something is wrong: the app shows a note with a **Copy** button when a commit couldn't be loaded, when the dash stopped, or when its code threw an error. Ask them to tap Copy and paste it to you.
 
-**The first time,** tell the person the one thing they do themselves: in the app, **Settings, Dash, Build your own**, paste this repo's GitHub address, and tap **Add**. The repo must be public. From then on the app follows it.
+**The first time,** tell the person the one thing they do themselves: in the app, **Settings, ECU, Advanced, Build your own**, paste this repo's GitHub address, and tap **Add**. The repo must be public. From then on the app follows it.
+
+## Every dash is someone's
+
+Most people start from a dash that exists (the TunerLoop dash, or one in the gallery) and want it changed: "the TunerLoop dash, but no lambda and a boost gauge". Their dash is then a copy in their own repo, and you change its **code**: there is no settings layer to configure, so edit the files.
+
+- **Making the copy:** a repo made from [tunerloop/dash-template](https://github.com/tunerloop/dash-template) already holds a copy of the TunerLoop dash as `dashes/my-dash`. For a gallery dash, copy its folder from `dashes/` in tunerloop/dashes into the repo instead, give it its own `id` and `name`, and set `"basedOn": {"id": "<its id>", "version": "<its version>"}` in `dash.json`. Keep `basedOn` in every copy: it is how a later version of the original gets merged in. The app's **Make it yours** (on a dash's row in Settings) gives the person a text to paste to you that says the same.
+- **Where the changes go:** make each change where the dash already keeps that kind of thing (in the TunerLoop dash: which boxes in `box_list.js`, limits and zones in `ranges.js`, labels in `kit/channels.js`), and change no more lines than you need. Small, local changes merge cleanly when the original moves on.
+
+## Taking a newer version of the original
+
+When the original a copy was made from has a newer version, the app says so on the dash's row in Settings ("TunerLoop 1.0.9 is out") and gives the person a text to paste to you. Then:
+
+1. `node tools/update-base.mjs dashes/<id>` (if `tools/update-base.mjs` isn't in the repo, copy it from tunerloop/dashes first). It reads tunerloop/dashes, finds the original at the copy's `basedOn` version and at the newest, and merges the difference into the copy file by file, the way git merges: the person's changes and the original's both stay, and `basedOn` moves to the new version.
+2. **Resolve every conflict it lists** (`<<<<<<< yours`, `=======`, `>>>>>>> new base`): keep what the person changed, unless the new version needs it otherwise. Remove the markers. Look at each `decide:` line too (a file one side deleted that the other changed).
+3. Then the loop as usual: `node tools/pack.mjs`, look at the preview, raise the version, push, and tell the person in a sentence what came in.
+
+Never copy the new original over the person's files: that throws their changes away.
 
 ## The rules
 

@@ -11,7 +11,7 @@ import { execFileSync } from 'node:child_process';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const AS_IS = ['AGENTS.md', 'CLAUDE.md', 'API.md', 'LICENSE', '.gitignore', '.github/workflows/check.yml',
-  'tools/pack.mjs', 'tools/pack.test.mjs', 'tools/preview.mjs', 'tools/preview.test.mjs', 'tools/manifest.js', 'tools/imports.js', 'tools/preview-host.json'];
+  'tools/pack.mjs', 'tools/pack.test.mjs', 'tools/preview.mjs', 'tools/preview.test.mjs', 'tools/update-base.mjs', 'tools/update-base.test.mjs', 'tools/manifest.js', 'tools/imports.js', 'tools/preview-host.json'];
 const NOT_COPIED = (src) => !src.endsWith('dash.bundle.json');
 
 export function writeTemplate(out) {

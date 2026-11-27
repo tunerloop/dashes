@@ -5,11 +5,13 @@ A dash for the [TunerLoop](https://app.tunerloop.com) app's Live tab, built with
 ## How to use this
 
 1. **Make your repo:** choose **Use this template** on GitHub. Keep the repo public: the app reads it without signing in to GitHub.
-2. **Point your phone at it:** in the app, **Settings, Dash, Build your own**, paste your repo's address (like `https://github.com/you/my-dash`), and tap **Add**.
+2. **Point your phone at it:** in the app, **Settings, ECU, Advanced, Build your own**, paste your repo's address (like `https://github.com/you/my-dash`), and tap **Add**.
 3. **Tell your AI what you want,** in this repo (Claude Code, Codex, or ChatGPT's agent): "make the tach bigger", "call oil temp OEL", "a bar graph of both lambda banks that turns red past 1.1", or "start over from the empty starter and make a shift light".
 4. **Watch your phone.** Each push shows on Live by itself, within about 15 seconds, keeping the settings you chose. Say what to change next.
 
 If your phone shows a note that the dash stopped or wasn't loaded, tap **Copy** and paste it to your AI.
+
+When the TunerLoop dash this one was copied from gets a newer version, the app says so on your dash's row in Settings, with a text to paste to your AI: it merges the new version in (`node tools/update-base.mjs dashes/my-dash`), keeping your changes.
 
 ## What's here
 

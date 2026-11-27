@@ -10,14 +10,16 @@ Every dash comes from a GitHub repo, and the app treats them all the same. The o
 
 ## Use one
 
-In the app: **Settings, Dash, More dashes**, then **Add**. Live runs it at once; pick TunerLoop again there any time. A dash from the gallery stays at the commit you added until you tap **Update**.
+In the app: **Settings, ECU, Dash, Get more dashes**, then **Add**. Live runs it at once; pick TunerLoop again there any time. Every dash takes new commits by itself, the gallery's included.
 
 ## Make your own, with an AI
 
 You need a GitHub account and an AI that can work in a repo and push to it: Claude Code, Codex, or ChatGPT's agent.
 
 1. **Make your repo:** open [tunerloop/dash-template](https://github.com/tunerloop/dash-template) and choose **Use this template**. Keep it public: the app reads it without signing in to GitHub.
-2. **Point your phone at it:** in the app, **Settings, Dash, Build your own**, paste your repo's address (like `https://github.com/you/my-dash`), and tap **Add**. It starts as a copy of the TunerLoop dash.
+2. **Point your phone at it:** in the app, **Settings, ECU, Advanced, Build your own**, paste your repo's address (like `https://github.com/you/my-dash`), and tap **Add**. It starts as a copy of the TunerLoop dash.
+
+Or let your AI do steps 1 and 3: on a dash's row in the app's Settings, tap its name, then **Make it yours**, and paste the text it copies to your AI.
 3. **Tell your AI what you want,** in your repo: "make the tach bigger", "call oil temp OEL", "a bar graph of both lambda banks that turns red past 1.1".
 4. **Watch your phone.** Each push shows on Live by itself, within about 15 seconds, keeping the settings you chose. Say what to change next.
 
@@ -29,7 +31,7 @@ To share your dash, open a pull request that adds its folder under `dashes/` her
 
 - [`dashes/`](dashes): the gallery. Big numbers and Shift light are small whole dashes to learn from.
 - [`starters/`](starters): `tunerloop/`, a complete copy of the app's own dash, kit included, and `empty/`, the smallest dash there is.
-- [`tools/`](tools): `pack.mjs` (the app's checks, and the files the app reads), `preview.mjs` (the preview), and `template.mjs` (writes the template repo from this one). `manifest.js`, `imports.js`, and `preview-host.json` are the app's own code, copied here by the app's `scripts/dash_tools.mjs`.
+- [`tools/`](tools): `pack.mjs` (the app's checks, and the files the app reads), `preview.mjs` (the preview), `update-base.mjs` (merges a newer version of the dash a copy was made from into the copy, keeping its changes), and `template.mjs` (writes the template repo from this one). `manifest.js`, `imports.js`, and `preview-host.json` are the app's own code, copied here by the app's `scripts/dash_tools.mjs`.
 - `node tools/pack.mjs` must pass, and each `dash.bundle.json` and `index.json` must be committed with the source they came from. The repo's check runs `node tools/pack.mjs --check` on every push and pull request.
 
 ## License

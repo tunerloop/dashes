@@ -10,5 +10,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --test tools/pack.test.mjs tools/preview.test.mjs
+      - run: node --test tools/pack.test.mjs tools/preview.test.mjs tools/update-base.test.mjs
       - run: node tools/pack.mjs --check
