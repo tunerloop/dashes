@@ -78,14 +78,13 @@ export function drawGlance(cv, key, most = 900) {
   const B = binSize(secs), bins = binSeries((k) => vals[k], n, B), span = Math.max(2, Math.ceil(secs / B));
   const style = glanceStyle(base), at = (k) => bins.avg[k] ?? NaN, under = style.recentEdge ? (k) => bins[style.recentEdge][k] ?? NaN : null;
   const rawBreaks = hist.breaks('slow', secs), breaks = rawBreaks.map((b) => ({ ...b, k: b.k < 0 ? b.k : Math.floor(b.k / B) }));
-  const stat = { min: lo, max: hi, avg };
+  const { extra, second, alsoAvg } = glanceAdds(v, n, B), stat = { min: lo, max: hi, avg, alsoAvg };
   const cells = temp ? [['Trend', s && s.rate !== null ? signed(delta(s.rate * 60), 0) : '-', `${ch.unit}/min`],
     warming ? ['Warm in', etaText(s.warmS), '', 'cold'] : cell('Max', v, hi)] : style.recent.map(([k, name]) => cell(name, v, stat[k]));
-  const { extra, second } = glanceAdds(v, n, B);
   const tip = ringTip(ch, rawBreaks);
   glanceFrame(cv, key, {
     cells, widest: temp ? ['+88', '8:88', wide(v)] : [wide(v)], warming, span, vals: [...bins.avg, ...(under ? bins[style.recentEdge] : []), ...extra.vals], at, under, breaks,
-    timeLabel: gapText(secs * 1000), tip: (k, val) => tip(k * B, val), now: s ? conv(s.now) : null, extra: extra.series, second, seconds: secs,
+    timeLabel: gapText(secs * 1000), tip: (k, val) => tip(k * B, val), now: s ? conv(s.now) : null, extra: extra.series, second, seconds: secs, mainLabel: extra.mainLabel,
   });
 }
 const wide = (v) => widestText(v);
@@ -101,10 +100,19 @@ function glanceAdds(v, n, B) {
     extra.series.push({ fn: (k) => line[k] ?? NaN, color: 'red', w: 1.5, label: 'Normal min' });
     extra.vals.push(...line.filter(Number.isFinite));
   }
+  let alsoAvg = null;
+  for (const [key, look] of [[g.also, { color: 'cold', w: 2.5, label: 'Bank 2' }], [g.target, { color: 'label', w: 1.5, dash: [4, 4], label: 'Target' }]]) {
+    const ring = key && hist.slow[key];
+    if (!ring) continue;
+    const line = binSeries((k) => ringOf(k)(ring), n, B).avg.map((x) => v.conv(x));
+    extra.series.push({ fn: (k) => line[k] ?? NaN, ...look });
+    extra.vals.push(...line.filter(Number.isFinite));
+    if (key === g.also) { const held = line.filter(Number.isFinite); alsoAvg = held.length ? held.reduce((t, x) => t + x, 0) / held.length : null; extra.mainLabel = 'Bank 1'; }
+  }
   const k2 = g.second, c2 = k2 && CHANNELS[k2], ring2 = k2 && hist.slow[k2];
   const b2 = ring2 ? binSeries((k) => ringOf(k)(ring2), n, B).avg : null;
   const second = c2 && b2 ? { at: (k) => b2[k] ?? NaN, lo: c2.min, hi: c2.max, label: `${c2.short || c2.label}${c2.unit ? ` ${c2.unit}` : ''}` } : null;
-  return { extra, second };
+  return { extra, second, alsoAvg };
 }
 
 // What a channel's glance pages lead with, by kind (the dash's ranges may name one with glance.style):
@@ -117,6 +125,7 @@ const STYLES = {
   speed: { recent: [['max', 'Max'], ['avg', 'Avg']], stored: [['max', 'Max'], ['avg', 'Avg']], recentEdge: null, edge: 'max' },
   peak: { recent: [['max', 'Peak'], ['avg', 'Avg']], stored: [['max', 'Peak'], ['avg', 'Avg']], recentEdge: 'max', edge: 'max' },
   range: { recent: [['min', 'Min'], ['max', 'Max']], stored: [['min', 'Min'], ['max', 'Max']], recentEdge: null, edge: 'min' },
+  mixture: { recent: [['avg', 'Bank 1'], ['alsoAvg', 'Bank 2']], stored: [['avg', 'Bank 1'], ['alsoAvg', 'Bank 2']], recentEdge: null, edge: null },   // both banks' averages (glance.also)
 };
 const glanceStyle = (base) => STYLES[base.glance?.style] || STYLES[base.kind] || STYLES.range;
 const isTemp = (base) => base.kind === 'temperature';
@@ -131,21 +140,43 @@ function widestText(v) { return [v.base.min, v.base.max].map((x) => Math.abs(v.c
 function glanceBuckets(cv, key, d, stepMs, timeLabel, when, gaps = true) {
   const v = view(key), { ch, conv, base } = v, { pts, breaks: all } = bucketSeries(d.rows, stepMs), breaks = gaps ? all : [], sum = bucketSummary(pts);
   const style = glanceStyle(base), edge = style.edge, edgeName = edge === 'max' ? 'Max' : 'Min', c = (k) => (sum ? conv(sum[k]) : null);
-  const at = (k) => (k < pts.length ? conv(pts[k].avg) : NaN), side = (k) => (k < pts.length ? conv(pts[k][edge] ?? pts[k].avg) : NaN);
-  const cells = style.stored.map(([k, name]) => cell(name, v, c(k)));
+  const at = (k) => (k < pts.length ? conv(pts[k].avg) : NaN), side = edge ? (k) => (k < pts.length ? conv(pts[k][edge] ?? pts[k].avg) : NaN) : null;
+  const { series: extra, vals: extraVals, alsoAvg } = bucketAdds(v, pts, d.kind);
+  const stat = { ...(sum || {}), alsoAvg }, c2 = (k) => (k === 'alsoAvg' ? alsoAvg : c(k));
+  const cells = style.stored.map(([k, name]) => cell(name, v, c2(k)));
   glanceFrame(cv, key, {
-    cells, widest: [widestText(v)], warming: false, span: Math.max(2, pts.length), vals: pts.flatMap((q) => [conv(q.avg), conv(q[edge] ?? q.avg)]), at, breaks,
-    timeLabel, tip: (k, val) => [when(pts[k]), `Avg ${valText(ch, val)}`, `${edgeName} ${valText(ch, side(k))}`], under: side,
+    cells, widest: [widestText(v)], warming: false, span: Math.max(2, pts.length), vals: [...pts.flatMap((q) => [conv(q.avg), conv(q[edge] ?? q.avg)]), ...extraVals], at, breaks,
+    timeLabel, tip: (k, val) => [when(pts[k]), `Avg ${valText(ch, val)}`, ...(side ? [`${edgeName} ${valText(ch, side(k))}`] : [])], under: side, extra, mainLabel: extra.length ? 'Bank 1' : null,
     now: pts.length ? at(0) : null, note: pts.length ? null : d.loaded ? 'No data' : 'Loading', tight: true,
   });
 }
+// The stored buckets of a channel with their start in ms (at), for 'today' or 'days'.
+function bucketsOf(kind, key) {
+  const d = trendData(kind, key);
+  return kind === 'days' ? { ...d, kind, rows: d.rows.map((x) => ({ ...x, at: Date.parse(`${x.day}T00:00:00Z`) })) } : { ...d, kind };
+}
+// What stored buckets add from the dash's ranges (glance.also, glance.target): bank 2 and the target,
+// each matched to the main channel's buckets by start time.
+function bucketAdds(v, pts, kind) {
+  const g = v.base.glance || {}, series = [], vals = [];
+  let alsoAvg = null;
+  for (const [key, look] of [[g.also, { color: 'cold', w: 2.5, label: 'Bank 2' }], [g.target, { color: 'label', w: 1.5, dash: [4, 4], label: 'Target' }]]) {
+    if (!key || !kind) continue;
+    const rows = bucketsOf(kind, key).rows, byAt = new Map(rows.map((q) => [q.at, q]));
+    const line = pts.map((q) => { const x = byAt.get(q.at); return x ? v.conv(x.avg) : NaN; });
+    series.push({ fn: (k) => line[k] ?? NaN, ...look });
+    vals.push(...line.filter(Number.isFinite));
+    if (key === g.also) { const s = bucketSummary(rows); alsoAvg = s ? v.conv(s.avg) : null; }
+  }
+  return { series, vals, alsoAvg };
+}
 const QUARTER_MS = 15 * 60_000;
 function glanceToday(cv, key) {
-  glanceBuckets(cv, key, trendData('today', key), QUARTER_MS, 'Today', (q) => `${clock12(q.at)} to ${clock12(q.at + QUARTER_MS)}`);
+  glanceBuckets(cv, key, bucketsOf('today', key), QUARTER_MS, 'Today', (q) => `${clock12(q.at)} to ${clock12(q.at + QUARTER_MS)}`);
 }
 function glanceDays(cv, key) {
-  const d = trendData('days', key), rows = d.rows.map((x) => ({ ...x, at: Date.parse(`${x.day}T00:00:00Z`) }));
-  glanceBuckets(cv, key, { ...d, rows }, DAY_MS, `${rows.length} of ${DAYS} days`, (q) => dayText(q.day), false);
+  const d = bucketsOf('days', key);
+  glanceBuckets(cv, key, d, DAY_MS, `${d.rows.length} of ${DAYS} days`, (q) => dayText(q.day), false);
 }
 
 // The dashed lines across a glance chart, from the dash's zones: a temperature's warm-up point
@@ -157,6 +188,7 @@ export function zoneLines(v, T, warming = false) {
   if (warm !== null) out.push({ v: conv(warm), color: T.cold, label: `Warm ${fmt(warm)}` });
   if (warming) return out;
   if (Number.isFinite(base.shift)) out.push({ v: conv(base.shift), color: T.warn || T.cold, label: `Shift ${fmt(base.shift)}` });
+  if (base.glance?.warnLine) for (const [lo, hi] of base.warn || []) if (lo <= base.min + 1e-9) out.push({ v: conv(hi), color: T.warn || T.cold, label: `${base.glance.warnLine} ${fmt(hi)}` });   // e.g. Rich
   for (const [lo, hi] of base.red || []) {
     if (lo <= base.min + 1e-9) out.push({ v: conv(hi), color: T.red, label: `Low ${fmt(hi)}` });
     else out.push({ v: conv(lo), color: T.red, label: `${base.glance?.redLabel || (isTemp(base) ? 'Hot' : 'High')} ${fmt(lo)}` });
@@ -188,14 +220,14 @@ function glanceFrame(cv, key, o) {
   const r = niceRange([...o.vals, ...levels.map((l) => l.v)], v.minSpan) || { lo: ch.min, hi: ch.max, step: (ch.max - ch.min) / 2 };
   const line = T.chartLine || T.fg, series = [{ fn: o.at, color: line, w: 2.5, fill: T.chartFill || T.fg, alpha: T.chartFillAlpha ?? 0.08, glow: T.chartGlow }];
   if (o.under) series.push({ fn: o.under, color: line, w: 1.2, dash: [3, 4] });
-  for (const e of o.extra || []) series.push({ ...e, color: e.color === 'red' ? T.red : e.color });
+  for (const e of o.extra || []) series.push({ ...e, color: T[e.color] || e.color });   // a theme colour by name (red, cold, label)
   if (o.second) {   // another channel on its own scale, drawn across the same height
     const { at: at2, lo: lo2, hi: hi2 } = o.second;
     series.push({ fn: (k) => r.lo + (Math.min(hi2, Math.max(lo2, at2(k))) - lo2) / (hi2 - lo2) * (r.hi - r.lo), color: T.cold, w: 1.5 });
   }
   const { P } = trace(g, T, p, cy, cwid, chh, { breaks: o.breaks, span: o.span, lo: r.lo, hi: r.hi, grid: grid(r), timeLabel: o.timeLabel, levels, levelsLeft: true, tip: o.tip, series, tight: o.tight });
   if (o.note) note(g, T, Z, p, cy, cwid, chh, o.note);
-  const keys = [...(o.extra || []).filter((e) => e.label).map((e) => [e.label, T.red]), ...(o.second ? [[o.second.label, T.cold]] : [])];
+  const keys = [...(o.mainLabel ? [[o.mainLabel, line]] : []), ...(o.extra || []).filter((e) => e.label).map((e) => [e.label, T[e.color] || e.color]), ...(o.second ? [[o.second.label, T.cold]] : [])];
   keys.forEach(([t, color], i) => text(g, t, p + cwid - 5, cy + 14 + i * 15, font(T, 11, 600), color, 'right'));   // what the extra lines are, top right
   const nowT = o.now === null ? '-' : nowText(key, ch, null);
   if (nowT !== '-') nowTag(g, T, Z, size, nowT, ch.unit, { P, at: o.at, now: o.now, top: cy, h: chh, fill: line });

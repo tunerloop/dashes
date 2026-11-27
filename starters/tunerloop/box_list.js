@@ -14,7 +14,7 @@ export const BOXES = [
   { id: 'oil', name: 'Oil pressure', kind: 'big', key: 'oil_kpa' },
   { id: 'oilt', name: 'Oil temp', kind: 'big', key: 'oil_temp_c' },
   { id: 'grid', name: 'All numbers', kind: 'grid' },
-  { id: 'twin', name: 'Lambda', kind: 'twin', units: 'mixture' },
+  { id: 'twin', name: 'Lambda', kind: 'twindial', key: 'lambda1', units: 'mixture' },   // the dual dial (kit/twin_dial.js), both banks
   { id: 'head', name: 'Head temp', kind: 'big', key: 'ect_c' },
   { id: 'battery', name: 'Battery', kind: 'big', key: 'battery_v' },
   { id: 'live', name: 'Live chart', kind: 'chart', chart: 'live' },
@@ -29,6 +29,6 @@ export const AUTO_BOXES = {
 };
 
 // Boxes that take the whole reading rather than one channel's value.
-export const WHOLE = new Set(['grid', 'twin', 'speed', 'g', 'oil', 'pull']);
+export const WHOLE = new Set(['grid', 'twin', 'twindial', 'speed', 'g', 'oil', 'pull']);
 
 export const THEMES = [['modern', 'Modern'], ['vintage', 'Vintage Flat'], ['vintage3d', 'Vintage 3D'], ['race', 'Race']];

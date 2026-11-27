@@ -44,16 +44,31 @@ function arc(r, a0, a1) {
 // hub's 5 readings a second; Direct's 20 a second need far less, config.directSmoothMs).
 const ease = (cur, target, dtMs, tauMs = 70) => (cur === null || tauMs <= 0 ? target : cur + (target - cur) * (1 - Math.exp(-dtMs / tauMs)));
 
+// Where a dial's numbers go: every step (the channel's dial step, display units), with three small
+// ticks between numbers, one at halfway (Steve, 2026-11-27: three at least, an odd number; a dash's
+// dial.steps overrides for an exception). A face has
+// room for about 20 characters of numbers round it: past that it numbers every other long tick (km/h
+// every 40, kPa every 200; mph, psi, deg F and the tach keep every step).
+export const DIAL_CHARS = 20;
+export const DIAL_STEPS = 4;
+export function dialNumbers(ch) {
+  const { scale = 1 } = ch.dial;
+  let { step } = ch.dial, chars = 0;
+  for (let i = 0, v = ch.min; v <= ch.max + 1e-9; i++, v = ch.min + i * step) chars += String(+(v / scale).toFixed(2)).length;
+  if (chars > DIAL_CHARS) step *= 2;
+  return { step, steps: ch.dial.steps ?? DIAL_STEPS };
+}
+
 export function makeGauge(key) {
   const base = CHANNELS[key];
   const ch = shown(base);
   const ang = (v) => -SWEEP + (Math.min(ch.max, Math.max(ch.min, v)) - ch.min) / (ch.max - ch.min) * 2 * SWEEP;
-  const { step, scale } = ch.dial;
+  const { step, steps } = dialNumbers(ch), { scale } = ch.dial;
   const note = ch.dial.note || ch.note;            // x1000 on the tach; which cylinders on a lambda dial
   let ticks = '', nums = '', vdo = '';
   const within = (zs, v) => (zs || []).some(([lo, hi]) => v >= lo - 1e-9 && v <= hi + 1e-9);
   const inZone = (v) => within(ch.warn, v) || within(ch.red, v);
-  const steps = ch.dial.steps ?? 5, minor = step / steps;   // steps between numbers: 5 (a tick every fifth), or 4 for one at halfway
+  const minor = step / steps;
   for (let i = 0, v = ch.min; v <= ch.max + 1e-9; i++, v = ch.min + i * minor) {
     const major = i % steps === 0;
     // minor ticks are drawn 12 long; each theme shows as much of a tick as it wants (stroke-dasharray, boxes.css)

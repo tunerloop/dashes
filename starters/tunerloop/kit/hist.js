@@ -15,7 +15,7 @@ export const FAST_HZ = 25;
 const FAST_KEYS = ['rpm', 'tps_pct', 'map_kpa', 'lambda1', 'lambda2', 'lambda_target', 'oil_kpa', 'speed_kmh', 'g_lat', 'g_long'];
 // Every channel a glance page draws needs its 15 minutes here: a dash's VDO dial boxes, and what
 // their charts add (throttle beside speed, rpm for oil pressure's least for the revs).
-const SLOW_KEYS = ['ect_c', 'oil_temp_c', 'iat_c', 'battery_v', 'oil_kpa', 'speed_kmh', 'tps_pct', 'rpm'];
+const SLOW_KEYS = ['ect_c', 'oil_temp_c', 'iat_c', 'battery_v', 'oil_kpa', 'speed_kmh', 'tps_pct', 'rpm', 'lambda1', 'lambda2', 'lambda_target'];
 
 // Time with no readings is not stored: the rings simply stop, so the charts stop scrolling. Each stop
 // longer than this is remembered as a break to mark on the chart.

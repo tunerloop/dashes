@@ -21,24 +21,24 @@ export const RANGES = {
   // The real VDO tach prints neither 0 nor 8: left off in Vintage 3D.
   // vdo on the tach: its dial (a gauge box) gets the graphs pages, led by its peak, throttle beside it.
   rpm: { red: [[7500, 8000]], shift: 6700, dial: { bare: [0, 8] }, vdo: true, glance: { style: 'peak', second: 'tps_pct', redLabel: 'Redline' } },
-  lambda1: { note: 'cyl 1-3', valid: LAMBDA_VALID, red: [[1.15, 1.4]], warn: [[0.6, 0.75]] },
+  // glance: the Lambda box's charts (its dual dial, kit/twin_dial.js) draw bank 2 and the target beside bank 1.
+  lambda1: { note: 'cyl 1-3', valid: LAMBDA_VALID, red: [[1.15, 1.4]], warn: [[0.6, 0.75]], glance: { style: 'mixture', also: 'lambda2', target: 'lambda_target', redLabel: 'Lean', warnLine: 'Rich' } },
   lambda2: { note: 'cyl 4-6', valid: LAMBDA_VALID, red: [[1.15, 1.4]], warn: [[0.6, 0.75]] },
   // ect_c is the cylinder head on this engine. Falling fast is shock cooling (air-cooled aircraft
   // monitors: Lycoming says under 50 deg F, 27.8 deg C, a minute).
   ect_c: { red: [[210, 250]], warn: [[180, 210]], cooling: [16.7, 27.8], trend: { span: 20 }, vdo: true, dialLabel: 'HEAD {unit}' },
   iat_c: { red: [[65, 80]], warn: [[50, 65]] },
   // vdo: a VDO dial box, with the graphs pages (pages.js); dialLabel the name on its face.
-  battery_v: { red: [[10, 11.8], [15.2, 16]], warn: [[11.8, 12.4]], trend: { span: 1, valid: [8, 18] }, vdo: true, dialLabel: 'VOLTS', dial: { steps: 4 } },
-  // dial steps 4: three small ticks between numbers, one at halfway (every 5 psi; Steve, 2026-11-27).
+  battery_v: { red: [[10, 11.8], [15.2, 16]], warn: [[11.8, 12.4]], trend: { span: 1, valid: [8, 18] }, vdo: true, dialLabel: 'VOLTS' },
   // glance: what else its charts draw (kit/trend_views.js): revMin the least that's normal for the
   // revs (the Oil Envelope's rule, OIL below), second another channel on its own scale.
-  oil_kpa: { red: [[0, 100]], vdo: true, dialLabel: 'OIL {unit}', dial: { steps: 4 }, trend: { span: 100 }, glance: { revMin: true } },
-  speed_kmh: { vdo: true, dialLabel: '{unit}', dial: { steps: 4 }, trend: { span: 20 }, glance: { second: 'tps_pct' } },
+  oil_kpa: { red: [[0, 100]], vdo: true, dialLabel: 'OIL {unit}', trend: { span: 100 }, glance: { revMin: true } },
+  speed_kmh: { vdo: true, dialLabel: '{unit}', trend: { span: 20 }, glance: { second: 'tps_pct' } },
   fuel_kpa: { red: [[0, 250]] },
   // 248 and 230 deg F: an air-cooled six's usual limits. Warming up: under 60 deg C,
   // from the dial's start. The dial prints no number on its first tick, like the tach's 0, and its name
   // with the unit on the face (the LCD shows just the number).
-  oil_temp_c: { valid: [-39, 199], red: [[120, 150]], warn: [[110, 120]], cold: [[-40, WARM_BELOW_C]], dial: { bareFirst: true }, vdo: true, dialLabel: 'OIL {unit}', trend: { span: 20 } },
+  oil_temp_c: { valid: [-39, 199], red: [[120, 150]], warn: [[110, 120]], cold: [[-40, WARM_BELOW_C]], vdo: true, dialLabel: 'OIL {unit}', trend: { span: 20 } },
 };
 
 // The Oil Envelope and its alarm: the least oil pressure that's normal for the revs, a common rule

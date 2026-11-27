@@ -9,7 +9,7 @@
 // its own with useChannels(ranges) at mount, so every kit module in its frame sees them. Outside a dash (the app's own pages) the table stays as it is.
 // Values, zones, valid ranges and dials are in the base unit the car sends (kPa, deg C, lambda);
 // kind says how a channel converts for display, and shown() gives it in the chosen unit. unit is the
-// base unit's label (the raw ecu.live table on the Activity tab shows base values).
+// base unit's label (the raw ecu.live table on the Sync History tab shows base values).
 // What a dash's ranges may add to a channel:
 //   red, warn, cold: zones, [lo, hi] pairs; a value inside a red zone shows red, inside a warn zone
 //     amber; cold is where the engine is still warming up (the dial's yellow ticks).

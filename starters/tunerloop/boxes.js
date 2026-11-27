@@ -2,6 +2,7 @@
 import { CHANNELS } from './kit/channels.js';
 import { makeGauge, makeBig, makeGrid } from './kit/gauge.js';
 import { makeTwin } from './kit/twin.js';
+import { makeTwinDial } from './kit/twin_dial.js';
 import { makeSpeed, makeG, makePull } from './kit/phone_boxes.js';
 import { makeOil } from './kit/details.js';
 import { makeChart } from './kit/charts.js';
@@ -11,6 +12,7 @@ export function makeBox(spec) {
   if (spec.kind === 'gauge') return makeGauge(spec.key);
   if (spec.kind === 'big') return makeBig(spec.key);
   if (spec.kind === 'twin') return makeTwin();
+  if (spec.kind === 'twindial') return makeTwinDial();
   if (spec.kind === 'speed') return makeSpeed();
   if (spec.kind === 'g') return makeG();
   if (spec.kind === 'oil') return makeOil();
