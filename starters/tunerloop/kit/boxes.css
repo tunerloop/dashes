@@ -96,47 +96,7 @@
 .big[data-zone="red"] .big-v .v, .grid [data-zone="red"] .v { color: var(--d-red); }
 .big[data-zone="warn"] .big-v .v, .grid [data-zone="warn"] .v { color: var(--d-warn); }
 
-/* ---------------------------------------------------------------- Lambda Twin (twin.js) */
-.twin { flex-direction: column; align-items: stretch; justify-content: space-between; gap: 2cqmin; padding: 6cqmin 6cqmin 7cqmin; font-family: var(--d-font); }
-.tw-head { display: flex; justify-content: space-between; align-items: baseline; color: var(--d-label); font-size: var(--t-lbl); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
-.tw-split { color: var(--d-warn); font-weight: 700; }
-.tw-row { display: grid; grid-template-columns: 36% 1fr; grid-template-rows: auto auto; column-gap: 4cqmin; align-items: center; }
-.tw-k { grid-column: 1 / -1; color: var(--d-label); font-size: var(--t-lbl); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
-.tw-row + .tw-row .tw-k { color: var(--d-b2); }
-.tw-n { color: var(--d-value); font-size: var(--t-big); line-height: 1; font-weight: 700; font-style: var(--d-value-style); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
-.tw-bar { position: relative; height: 14cqh; border-radius: 99px; background: var(--d-track); }
-.tw-bar::after { content: ""; position: absolute; left: calc(50% - 1px); top: -3cqh; bottom: -3cqh; width: 2px; background: var(--d-value); }
-.tw-band { position: absolute; top: 0; bottom: 0; left: var(--tw-band-l); width: var(--tw-band-w); background: color-mix(in srgb, var(--d-ok) 16%, transparent); }
-.tw-fill { position: absolute; top: 0; bottom: 0; left: 50%; width: 0; border-radius: 4px; background: var(--d-ok); }
-.tw-tick { position: absolute; top: -2cqh; bottom: -2cqh; width: 4px; margin-left: -2px; background: var(--d-value); border-radius: 2px; }
-.tw-cut { display: none; position: absolute; inset: 0 0 0 50%; align-items: center; justify-content: center; color: var(--d-label); font-size: var(--t-lbl); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
-  background: repeating-linear-gradient(-45deg, transparent 0 5px, var(--d-grid) 5px 8px); border-radius: 0 99px 99px 0; }
-.tw-row[data-st="cut"] .tw-cut { display: flex; }
-.tw-row[data-st="cut"] .tw-n { color: var(--d-label); }
-.tw-row[data-st="rich"] .tw-n { color: var(--d-rich); } .tw-row[data-st="rich"] .tw-fill { background: var(--d-rich); }
-.tw-row[data-st="lean"] .tw-n { color: var(--d-lean); } .tw-row[data-st="lean"] .tw-fill { background: var(--d-lean); }
-.tw-row[data-st="danger"] .tw-n { color: var(--d-red); } .tw-row[data-st="danger"] .tw-fill { background: var(--d-red); }
-.tw-scale { display: grid; grid-template-columns: 36% 1fr 1fr 1fr 1fr; column-gap: 4cqmin; color: var(--d-label); font-size: var(--t-lbl); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
-.tw-scale span:first-child { grid-column: 2; } .tw-scale span:nth-child(2) { text-align: right; } .tw-scale span:nth-child(3) { text-align: left; } .tw-scale span:last-child { text-align: right; }
-.tw-scale .rich { color: var(--d-rich); } .tw-scale .lean { color: var(--d-lean); }
-
 /* ---------------------------------------------------------------- phone boxes (phone_boxes.js) and automatic modes */
-/* Speed: a window sized for three digits (it never grows, 8 or 128), the unit small inside it, then
-   the accelerating/braking bar and its reading. In the Vintage styles the window is an orange LCD. */
-.speed { flex-direction: column; align-items: stretch; justify-content: center; gap: 4cqh; padding: 6cqmin; font-family: var(--d-font); }
-.speed .sp-k { position: absolute; left: 6cqmin; top: 5cqmin; color: var(--d-label); font-size: var(--t-lbl); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
-.speed .sp-lcd { display: flex; align-items: baseline; justify-content: center; gap: 2cqmin; padding: 2cqh 4cqmin; border-radius: 2cqmin; color: var(--d-value); }
-.speed .sp-lcd .v { width: 3ch; text-align: right; font-size: min(var(--t-hero), calc((80cqw - var(--t-lbl) * 2) / 1.7));   /* never wider than the window on a narrow phone */ line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
-.speed .sp-lcd .u { width: 3.2ch; white-space: nowrap; font-size: var(--t-small); font-weight: 600; color: var(--d-label); }
-.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .speed .sp-lcd { color: var(--d-lcd); background: var(--d-lcd-bg); box-shadow: inset 0 0 0 0.6cqmin #0b0503; }
-.dash:is([data-theme="vintage"], [data-theme="vintage3d"]) .speed .sp-lcd .u { color: var(--d-lcd); }
-.speed .sp-row { display: flex; justify-content: space-between; align-items: baseline; color: var(--d-label); font-size: var(--t-lbl); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
-.speed .sp-row .sp-g { color: var(--d-value); font-size: var(--t-small); font-variant-numeric: tabular-nums; letter-spacing: 0; }
-.speed .sp-row .br { color: var(--d-red); } .speed .sp-row .ac { color: var(--d-ok); }
-.speed .sp-bar { position: relative; width: 100%; height: 6cqh; border-radius: 99px; background: var(--d-track); }
-.speed .sp-bar::after { content: ""; position: absolute; left: calc(50% - 1px); top: -1cqh; bottom: -1cqh; width: 2px; background: var(--d-value); }
-.speed .sp-bar i { position: absolute; top: 0; bottom: 0; left: 50%; width: 0; border-radius: 4px; background: var(--d-ok); }
-.speed .sp-bar i[data-dir="brake"] { background: var(--d-red); }
 .gmeter canvas { position: absolute; inset: 4cqmin; width: calc(100% - 8cqmin); height: calc(100% - 8cqmin); }
 .gmeter .gm-read { position: absolute; left: 5cqmin; bottom: 4cqmin; color: var(--d-value); font: 700 var(--t-value)/1 var(--d-font); font-variant-numeric: tabular-nums; }
 .gmeter .gm-k { color: var(--d-label); font-size: var(--t-lbl); margin-left: 1cqmin; }
@@ -169,18 +129,7 @@
 .grid .u { color: var(--d-label); font-size: var(--t-lbl); margin-left: 1cqmin; font-weight: 600; min-width: calc(var(--uw, 0) * 0.62em); text-align: left; }
 .grid .n .v { min-width: 0; }
 
-/* ---------------------------------------------------------------- charts */
-.chart-box { flex-direction: column; align-items: stretch; padding: 8px 8px 20px; font-family: var(--d-font); }
-.chart-head { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; font-size: var(--t-lbl); color: var(--d-label); padding: 0 4px 4px; }
-.chart-title { color: var(--d-value); font-weight: 700; margin-right: 4px; }
-.chart-head .sw { display: inline-block; width: 12px; height: 3px; margin-right: 4px; vertical-align: middle; border-radius: 2px; }
-.sw-rpm { background: var(--d-s-rpm); } .sw-tps { background: var(--d-s-tps); } .sw-map { background: var(--d-s-map); }
-.sw-ect { background: var(--d-s-ect); } .sw-iat { background: var(--d-s-iat); } .sw-oil { background: var(--d-s-oil); }
-.chart-plots { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
-.chart-plot { flex: 1; min-height: 0; position: relative; }
-.chart-plot + .chart-plot { display: none; }
-@container (max-aspect-ratio: 5/7) { .chart-plot + .chart-plot { display: block; } }
-.chart-plot .uplot { position: absolute; inset: 0; }
+/* ---------------------------------------------------------------- chart tips (canvas_tip.js) */
 /* The mouse over a chart (charts.js hoverTip): a line at that moment and a label with its time and values */
 .chart-hair { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--d-label); pointer-events: none; }
 .chart-tip { position: absolute; top: 4px; display: flex; flex-direction: column; gap: 2px; padding: 6px 10px; border-radius: 8px; background: rgba(0, 0, 0, 0.88);

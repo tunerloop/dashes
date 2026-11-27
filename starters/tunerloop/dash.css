@@ -13,10 +13,6 @@
 /* ---------------------------------------------------------------- pages (pages.js): what a panel or full screen shows */
 .page { position: absolute; inset: 0; will-change: transform; }
 .page[hidden] { display: none; }
-.page canvas.detail, .canvas-box canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.page canvas.under { position: absolute; left: 0; right: 0; top: 50%; width: 100%; height: 50%; display: block; }   /* full screen held upright: the chart under the box */
-.page canvas.under[hidden] { display: none; }
-.box.half { bottom: 50%; }
 /* The full screen layer over the panels (panels.js): one panel's full screen page */
 .panel.dash-full { position: absolute; inset: 0; z-index: 3; will-change: transform; }
 .panel.dash-full[hidden] { display: none; }

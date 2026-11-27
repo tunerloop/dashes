@@ -2,7 +2,6 @@
 // A short history of the live reading on the phone, for the Car tab's detail views (the 10 s and
 // 30 s charts, the compass cloud, the G trail, the temperature trends). Fast channels are sampled
 // 25 times a second for 30 s; slow ones once a second for 15 minutes. A missing value is NaN. Peak g for this drive is kept too.
-import { overrun } from './twin.js';
 
 export class Ring {
   constructor(n) { this.n = n; this.a = new Float32Array(n).fill(NaN); this.i = 0; this.len = 0; }
@@ -11,6 +10,9 @@ export class Ring {
   avg(n) { let s = 0, c = 0; for (let k = 0; k < Math.min(n, this.len); k++) { const v = this.at(k); if (!Number.isNaN(v)) { s += v; c++; } } return c ? s / c : null; }
 }
 
+// Fuel cut on overrun: throttle closed with the revs up, where the injectors cut and the widebands
+// read air. (A Link fuel-cut channel would be better when the live block carries one.)
+export const overrun = (r) => (r?.tps_pct ?? 100) < 2 && (r?.rpm ?? 0) > 1500;
 export const FAST_HZ = 25;
 const FAST_KEYS = ['rpm', 'tps_pct', 'map_kpa', 'lambda1', 'lambda2', 'lambda_target', 'oil_kpa', 'speed_kmh', 'g_lat', 'g_long'];
 // Every channel a glance page draws needs its 15 minutes here: a dash's VDO dial boxes, and what

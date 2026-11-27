@@ -1,5 +1,5 @@
 // kit/phone_boxes.js: the app's kit/phone_boxes.js as forked with tunerloop-dash. Yours to change.
-// Car tab boxes fed by the phone (sensors.js), not the car: Speed (GPS), the G meter (accelerometer)
+// Car tab boxes fed by the phone (sensors.js), not the car: the G meter (accelerometer)
 // and the Pull view the Hard acceleration mode shows (RPM, speed and the 0-60 / 50-70 timer from
 // runs.js). They take the whole reading, which the app's Car tab (js/dash/car_tab.js) extends with speed_kmh, g_lat, g_long and
 // run (the timer state). Colours come from the theme (themes.css --d-*).
@@ -7,34 +7,6 @@ import { CHANNELS, shown } from './channels.js';
 import { steadyText } from './steady.js';
 import { prep } from './kit.js';
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
-
-export function makeSpeed() {
-  const ch = shown(CHANNELS.speed_kmh), text = steadyText(ch);
-  const el = document.createElement('div');
-  el.className = 'box speed';
-  el.innerHTML = `<div class="sp-k">Speed</div><div class="sp-lcd"><span class="v">-</span><span class="u">${esc(ch.unit)}</span></div>
-    <div class="sp-bar"><i></i></div><div class="sp-row"><span class="br">Braking</span><span class="sp-g"></span><span class="ac">Accel</span></div>`;
-  const vEl = el.querySelector('.v'), bar = el.querySelector('.sp-bar i'), gEl = el.querySelector('.sp-g');
-  return {
-    el,
-    set(r) {
-      vEl.textContent = text(r?.speed_kmh);
-      const g = num(r?.g_long);
-      bar.style.display = g === null ? 'none' : '';
-      if (g !== null) {
-        const x = Math.max(-1, Math.min(1, g / 0.8)) * 50;
-        bar.style.left = `${50 + Math.min(0, x)}%`; bar.style.width = `${Math.abs(x)}%`; bar.dataset.dir = g < 0 ? 'brake' : 'accel';
-      }
-      gEl.textContent = g === null ? '' : `${g >= 0 ? '+' : '\u2212'}${Math.abs(g).toFixed(2)} g`;
-    },
-    frame() {},
-  };
-}
-
-// The friction circle: sideways across, accelerating up, braking down, with a 2 s trail and the
-// peak in each direction this drive as small marks on the outer ring.
 export function makeG() {
   const el = document.createElement('div');
   el.className = 'box gmeter';

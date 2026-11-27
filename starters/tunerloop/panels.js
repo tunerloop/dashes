@@ -112,7 +112,7 @@ export function createPanels(root, api, start) {
     if (!e.views[k]) {
       const v = makePageView(e.spec, e.pages[k]);
       (e.pages[k].where === 'full' ? layer : panel).slot.append(v.el);
-      if (lastCtx) v.update({ ...lastCtx, dt: 16, chartDue: true });   // drawn before it shows: nothing blinks in empty
+      if (lastCtx) v.update({ ...lastCtx, dt: 16 });   // drawn before it shows: nothing blinks in empty
       e.views[k] = v;
     }
     return e.views[k];
@@ -351,8 +351,8 @@ export function createPanels(root, api, start) {
 
   // ------------------------------------------------------------ each animation frame
 
-  // ctx: this frame's readings for the views (pages.js feed): { value, dt, smoothMs, now, chartDue, fast,
-  // fastTms, playhead, trend }; autos: [left mode, right mode] (kit/automodes.js).
+  // ctx: this frame's readings for the views (pages.js feed): { value, dt, smoothMs, now }; autos: [left
+  // mode, right mode] (kit/automodes.js).
   function draw(ctx, autos) {
     lastCtx = ctx;
     autos.forEach((k, p) => {

@@ -8,7 +8,7 @@
 // (gauge style, automatic modes) are its own too, in settings.js, opened by the app's gear.
 //
 // Data comes from the app: each reading (base units, with the phone's speed, g and tilt and the 0-60
-// timer), the live chart's rows and the 2-hour trend; the phone's recent history at start.
+// timer); the phone's recent history at start; stored history on request (kit/trend_data.js).
 import { hist } from './kit/hist.js';
 import { useUnits } from './kit/units.js';
 import { useChannels } from './kit/channels.js';
@@ -25,7 +25,6 @@ import { RANGES, OIL, WARM_BELOW_C } from './ranges.js';
 import { ALARMS } from './alarms.js';
 import { loadSettings, openSettings } from './settings.js';
 
-const KEEP_ROWS = 3000, CHART_EVERY_MS = 100;   // the live chart shows the last minute: keep what the app keeps
 
 export default function mount(api) {
   const root = api.root, start = startFrom(api.params);
@@ -55,7 +54,6 @@ export default function mount(api) {
   api.on('tune', () => { useChannels(redlineRanges(redline().rpm)); panels.rebuild(); });
 
   let value = null, smooth = 70, autoSt = {};
-  const feed = { rows: [], tms: [], end: null, trend: [] };
   api.on('reading', (v, t, m) => {
     value = v;
     smooth = m.smoothMs ?? 70;
@@ -64,17 +62,10 @@ export default function mount(api) {
     hist.tick(t);
     if (!m.dim) hist.push(v, t);   // late readings aren't charted: the charts stop until new ones come
   });
-  api.on('rows', (m) => {
-    if (m.reset) { feed.rows = []; feed.tms = []; }
-    for (const r of m.rows) { feed.rows.push(r); feed.tms.push(new Date(r.t).getTime()); }
-    if (feed.rows.length > KEEP_ROWS) { feed.rows.splice(0, feed.rows.length - KEEP_ROWS); feed.tms.splice(0, feed.tms.length - KEEP_ROWS); }
-    feed.end = m.end;
-  });
-  api.on('trend', (rows) => { feed.trend = rows; });
   api.on('units', (u) => { useUnits(u); panels.rebuild(); });
   api.on('fonts', panels.rebuildViews);   // charts drew before the theme fonts arrived
 
-  let last = 0, lastChart = 0;
+  let last = 0;
   requestAnimationFrame(function frame(now) {
     requestAnimationFrame(frame);
     const dt = last ? Math.min(250, now - last) : 16;
@@ -82,9 +73,7 @@ export default function mount(api) {
     if (root.dataset.theme === 'vintage3d') moveLight(root, value, now);
     const auto = autoStep(autoSt, value, Date.now(), autoOn);
     autoSt = auto.st;
-    const chartDue = now - lastChart > CHART_EVERY_MS;
-    panels.draw({ value, dt, smoothMs: smooth, now, chartDue, fast: feed.rows, fastTms: feed.tms, playhead: feed.end, trend: feed.trend }, [auto.left, auto.right]);
-    if (chartDue) lastChart = now;
+    panels.draw({ value, dt, smoothMs: smooth, now }, [auto.left, auto.right]);
     showAlarms(root, value, now, ALARMS);
   });
 }

@@ -1,18 +1,19 @@
 // kit/trend_views.js: the app's kit/trend_views.js as forked with tunerloop-dash. Yours to change.
-// The value panels' charts (battery, head temp, oil temp): the last minute along the bottom of the
-// panel, then full screen the last hour and the last 30 days by day, each with now, min, max, and the
-// trend of the current climb or fall (trend_rules.js runTrend). Time with no data takes no room: each gap is one small mark with its length.
+// The glance pages of a dash's VDO dial boxes (kit/gauge.js makeGlance), all in one look: two big
+// numbers over an amber window with a chart, the reading now as a tag on its newest point; the last 15
+// minutes from the phone's own history, today and the last 30 days from the hub's (trend_data.js).
+// Time with no data takes no room: each gap is one small mark with its length. Also the last minute
+// along the bottom of a value panel (drawRecent).
 import { hist } from './hist.js';
 import { CHANNELS, shown, warmAt } from './channels.js';
 import { oilMin } from './oil.js';
 import { steadyText } from './steady.js';
-import { prep, themeOf, typeScale, font, text, label, fixed, fixedWidth, trace, axes, line, signed, twoCharts, GAP_PX } from './kit.js';
-import { summarize, summarizeDays, runTrend, niceRange, collapseGaps, gapText, timeChart, glance, etaText, growSpan, bucketSeries, bucketSummary, binSeries, binSize } from './trend_rules.js';
+import { prep, themeOf, typeScale, font, text, label, fixed, fixedWidth, trace, signed } from './kit.js';
+import { niceRange, gapText, glance, etaText, growSpan, bucketSeries, bucketSummary, binSeries, binSize } from './trend_rules.js';
 import { trendData } from './trend_data.js';
-import { addTip, nearest } from './canvas_tip.js';
 import { clock12 } from './time.js';
 
-const HOUR_MS = 3_600_000, DAY_MS = 86_400_000, GAP_MS = 90_000, TREND_MAX_MS = 15 * 60_000, HOUR_POINTS = 240, DAYS = 30;
+const DAY_MS = 86_400_000, DAYS = 30;
 const num = (v) => (v === null || v === undefined ? NaN : v);
 
 // A channel's display conversions, its least chart height, and the grid inside a range.
@@ -279,88 +280,8 @@ function nowText(key, ch, stored) {
   return v === null || v === undefined ? '-' : (steadies[key] ??= steadyText(ch))(v);
 }
 
-// The name and the four numbers over a chart. trend: runTrend's answer; per: its unit of time in ms;
-// perText: "h" or "d". Returns the chart's top.
-function header(g, T, Z, v, p, w, h, nowT, s, trend, per, perText) {
-  const up = h > w * 1.2, cols = up ? 2 : 4, cw = (w - 2 * p) / cols, size = Z.value, rowH = Z.lbl * 1.35 + size;
-  const { ch, conv, delta } = v;
-  label(g, T, ch.unit ? `${ch.label} (${ch.unit})` : ch.label, p, p + Z.lbl, Z.lbl, T.fg);
-  const top = p + Z.lbl * 1.9, dp = ch.dp ? ch.dp + 1 : 0;
-  const cells = [['Now', nowT], ['Min', s ? conv(s.min).toFixed(ch.dp) : '-'], ['Max', s ? conv(s.max).toFixed(ch.dp) : '-'],
-    [trend ? `Trend ${gapText(trend.ms)}` : 'Trend', trend ? signed(delta(trend.rate * per), dp) : '-', trend ? `/${perText}` : '']];
-  cells.forEach(([k, t, unit], i) => {
-    const x = p + (i % cols) * cw, y = top + Math.floor(i / cols) * rowH, base = y + Z.lbl * 1.25 + size * 0.85;
-    label(g, T, k, x, y + Z.lbl, Z.lbl);
-    const tw = fixed(g, t, x, base, font(T, size), T.fg);
-    if (unit) text(g, unit, x + tw + 3, base, font(T, Z.small * 0.7, 600), T.label);
-  });
-  return top + Math.ceil(4 / cols) * rowH + p * 0.4;
-}
+// A word across an empty chart.
 function note(g, T, Z, x, y, w, h, s) { text(g, s, x + w / 2, y + h / 2, font(T, Z.small, 600), T.label, 'center'); }
 
-// The readings of the last spanMs as a line, with real breaks marked.
-function hourChart(g, T, Z, v, d, now, spanMs, x, y, cw, chh) {
-  const rows = d.rows.filter((q) => q.t > now - spanMs);
-  const points = rows.map((q) => ({ t: q.t, v: v.conv(q.v) })), { at, ts, breaks } = timeChart(points, now, GAP_MS, HOUR_POINTS);
-  const r = niceRange([...at], v.minSpan) || { lo: v.ch.min, hi: v.ch.max, step: (v.ch.max - v.ch.min) / 2 };
-  const gapMs = breaks.reduce((t, q) => t + q.ms, 0), held = rows.length ? now - rows[0].t - gapMs : 0;
-  trace(g, T, x, y, cw, chh, { span: HOUR_POINTS, lo: r.lo, hi: r.hi, grid: grid(r), gridLabel: gridText(r), breaks, sparse: true,
-    timeLabel: rows.length ? `${Math.max(1, Math.round(held / 60_000))} min of data` : '', tip: (k, val) => [clock12(ts[k]), valText(v.ch, val)],
-    series: [{ fn: (k) => at[k], color: T.fg, w: 2.5, fill: T.fg, alpha: 0.08 }] });
-  if (!rows.length) note(g, T, Z, x, y, cw, chh, d.loaded ? 'No data' : 'Loading');
-}
-
-function drawHour(g, w, h, T, key, p, Z) {
-  const v = view(key), d = trendData('hour', key), now = Date.now(), rows = d.rows.filter((x) => x.t > now - HOUR_MS);
-  const s = summarize(rows.map((x) => x.v)), move = v.span / 4;
-  const trend = runTrend(rows.map((x) => [x.t, x.v]), { minMove: move, maxGapMs: GAP_MS, maxMs: TREND_MAX_MS, minMs: 60_000 });
-  const y = header(g, T, Z, v, p, w, h, nowText(key, v.ch, rows[rows.length - 1]?.v), s, trend, HOUR_MS, 'h'), cw = w - 2 * p;
-  if (h <= w * 1.2) { hourChart(g, T, Z, v, d, now, HOUR_MS, p, y, cw, h - y - p); return; }
-  const [a, b] = twoCharts(y, h - p, p * 0.6);   // upright: the hour, then its last 15 minutes up close
-  hourChart(g, T, Z, v, d, now, HOUR_MS, p, a.y, cw, a.h);
-  hourChart(g, T, Z, v, d, now, TREND_MAX_MS, p, b.y, cw, b.h);
-}
-
-// The last `days` days as bars from each day's min to its max, a tick at its average.
-function dayChart(g, T, Z, v, d, days, x0, y, cw, chh) {
-  const today = Date.parse(`${d.today || new Date().toISOString().slice(0, 10)}T00:00:00Z`), byDay = new Array(days).fill(null);
-  for (const x of d.rows) {
-    const k = Math.round((today - Date.parse(`${x.day}T00:00:00Z`)) / DAY_MS);
-    if (k >= 0 && k < days) byDay[k] = x;
-  }
-  const held = byDay.filter(Boolean), vals = held.flatMap((x) => [v.conv(x.min), v.conv(x.max)]);
-  const r = niceRange(vals, v.minSpan) || { lo: v.ch.min, hi: v.ch.max, step: (v.ch.max - v.ch.min) / 2 };
-  const { slots, breaks } = collapseGaps(byDay.map(Boolean), DAY_MS), n = slots.length, span = n + 1;   // each day owns a slot; missing days are one small mark
-  trace(g, T, x0, y, cw, chh, { span: Math.max(2, span), lo: r.lo, hi: r.hi, grid: grid(r), gridLabel: gridText(r), breaks,
-    timeLabel: held.length ? `${held.length} day${held.length === 1 ? '' : 's'} of data` : '',
-    series: [] });
-  const { P } = axes(x0, y, cw, chh, Math.max(2, span), r.lo, r.hi, breaks), bar = n ? Math.max(3, Math.min(48, ((cw - breaks.length * GAP_PX) / n) * 0.6)) : 0;
-  const tips = [];
-  slots.forEach((k, q) => {
-    const x = byDay[k];
-    tips.push([P(q + 0.5, 0)[0], [dayText(x.day), `Max ${valText(v.ch, v.conv(x.max))}`, `Avg ${valText(v.ch, v.conv(x.avg))}`, `Min ${valText(v.ch, v.conv(x.min))}`]]);
-    const c0 = q + 0.5, [a, b] = P(c0, v.conv(x.min)), [c, e] = P(c0, v.conv(x.max)), [m, o] = P(c0, v.conv(x.avg));
-    g.save(); g.globalAlpha = 0.4; line(g, a, b, c, e, T.fg, bar); g.restore();
-    line(g, m - bar / 2, o, m + bar / 2, o, T.fg, 3);
-  });
-  addTip(g.canvas, { x: x0, y, w: cw, h: chh }, (mx) => nearest(tips, mx));
-  if (!held.length) note(g, T, Z, x0, y, cw, chh, d.loaded ? 'No data' : 'Loading');
-}
 // "Tue Nov 24" for a day's "2026-11-24" (the day as stored, not moved by the time zone).
 const dayText = (day) => new Date(`${day}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' }).replace(',', '');
-
-function drawDays(g, w, h, T, key, p, Z) {
-  const v = view(key), d = trendData('days', key), s = summarizeDays(d.rows);
-  const trend = runTrend(d.rows.map((x) => [Date.parse(`${x.day}T00:00:00Z`), x.avg]), { minMove: v.span / 4, minPoints: 2, minMs: DAY_MS });
-  const y = header(g, T, Z, v, p, w, h, nowText(key, v.ch, null), s, trend, DAY_MS, 'd'), cw = w - 2 * p;
-  if (h <= w * 1.2) { dayChart(g, T, Z, v, d, DAYS, p, y, cw, h - y - p); return; }
-  const [a, b] = twoCharts(y, h - p, p * 0.6);   // upright: 30 days, then the last 7 up close
-  dayChart(g, T, Z, v, d, DAYS, p, a.y, cw, a.h);
-  dayChart(g, T, Z, v, d, 7, p, b.y, cw, b.h);
-}
-
-// Full screen level 1 (the last hour) or 2 (the last 30 days).
-export function drawHistory(g, w, h, level, T, key) {
-  const p = Math.round(Math.min(w, h) * 0.05) + 6, Z = typeScale(w, h);
-  (level === 1 ? drawHour : drawDays)(g, w, h, T, key, p, Z);
-}

@@ -10,7 +10,7 @@
 // the dials' own classes (boxes.css, themes.css), so every gauge style dresses it like the others.
 import { CHANNELS, shown, reading } from './channels.js';
 import { steadyText, holdAngle } from './steady.js';
-import { overrun } from './twin.js';
+import { overrun } from './hist.js';
 
 const LO = 0.7, HI = 1.3, SWEEP = 116, FROM = 148, R = 70, P = 22;   // FROM: rich's angle off straight up
 const f1 = (n) => n.toFixed(1);
