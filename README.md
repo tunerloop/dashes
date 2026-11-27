@@ -10,7 +10,7 @@ Every dash comes from a GitHub repo, and the app treats them all the same. The o
 
 ## Use one
 
-In the app: **Settings, ECU, Dash, Get more dashes**, then **Add**. Live runs it at once; pick TunerLoop again there any time. Every dash takes new commits by itself, the gallery's included.
+In the app: **Settings, ECU, Dash, + Add dash**, then **Add**. Live runs it at once; pick TunerLoop again there any time. Every dash takes new commits by itself, the gallery's included.
 
 ## Make your own, with an AI
 
