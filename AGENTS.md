@@ -28,6 +28,7 @@ If you have no browser, skip step 3 and say so: the person's phone is then the o
 - Readings come in base units (kPa, °C, km/h, lambda) through `api.on('reading', (v, t, m) => ...)`; a missing value is `null`: show `-`. Convert to the person's units (`api.units`, `api.on('units')`) for display.
 - Register handlers in `mount`: nothing is sent until it returns.
 - Always give the person a gesture that brings the app's tab bar back (`api.nav.show()`), or they can't leave the Live tab.
+- While the tab bar is hidden, the app's handle takes every touch in the bottom 60 px (the right 60 px with the phone sideways): keep buttons, a settings panel's included, out of that strip.
 - **A dash owns its settings.** Anything the person might want to change (a shift point, a style, which readings to show) is kept in `api.store` and set in a panel the dash draws itself, opened on `api.on('settings', fn)` (the app's gear). The app has no settings for a dash.
 - No `localStorage` (use `api.store`: plain JSON, 64 keys, 16 KB; check what you read back). Never navigate the page. Keep messages to the app few.
 - It is read in a moving car: big type, high contrast, nothing that needs a careful look. Red means stop now.
