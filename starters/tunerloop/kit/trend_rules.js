@@ -18,11 +18,6 @@ export function slope(points) {
   return d > 0 ? (n * sxy - sx * sy) / d : null;
 }
 
-// The days' rows ({day, min, max, avg, n}) as one min and max.
-export function summarizeDays(days) {
-  return days.length ? { min: Math.min(...days.map((d) => d.min)), max: Math.max(...days.map((d) => d.max)) } : null;
-}
-
 // The rate of the climb or fall happening now, never averaged across a peak or a dip. points: [[t, v]]
 // oldest first. A turn counts once the value comes back minMove from its extreme, so noise doesn't
 // start a new run; a break longer than maxGapMs starts one too. Only the newest maxMs of the run is
@@ -65,51 +60,6 @@ export function niceRange(values, minSpan) {
   return { lo, hi, step };
 }
 
-// Day slots (present[k], k = 0 today) packed side by side: missing days take no room, each run of them
-// is one break. Oldest empty days are dropped.
-//   slots: per chart position, the day it shows; breaks: [{k, ms}], k the position the break sits before.
-export function collapseGaps(present, slotMs) {
-  const slots = [], breaks = [];
-  let last = present.length - 1;
-  while (last >= 0 && !present[last]) last--;
-  for (let k = 0; k <= last; k++) {
-    if (present[k]) { slots.push(k); continue; }
-    let j = k;
-    while (!present[j + 1]) j++;
-    breaks.push({ k: slots.length, ms: (j - k + 1) * slotMs });
-    k = j;
-  }
-  return { slots, breaks };
-}
-
-// Sample times (ms, oldest first) with every break longer than maxGapMs cut out, leaving a mark px wide
-// on a plot plotPx wide showing activeMs of data (default: all of it). xs: the chart's x per sample;
-// gaps: [{from, to, ms}] in x; width: a mark's width in x; real(x): the true time at a chart x.
-export function collapseTimes(tms, maxGapMs, { px = 0, plotPx = 0, activeMs = null } = {}) {
-  let active = 0, count = 0;
-  for (let i = 1; i < tms.length; i++) { const d = tms[i] - tms[i - 1]; if (d <= maxGapMs) active += d; else count++; }
-  const held = activeMs ?? active;
-  const width = px && held > 0 ? held * px / Math.max(plotPx * 0.5, plotPx - count * px) : maxGapMs;
-  const xs = [], gaps = [], anchors = [];
-  let shift = 0;
-  tms.forEach((t, i) => {
-    const d = i ? t - tms[i - 1] : 0;
-    if (i && d > maxGapMs) {
-      const from = xs[i - 1];
-      shift += d - width;
-      gaps.push({ from, to: t - shift, ms: d });
-      anchors.push([t - shift, t]);
-    } else if (!i) anchors.push([t, t]);
-    xs.push(t - shift);
-  });
-  const real = (x) => {
-    let a = anchors[0];
-    for (const c of anchors) { if (c[0] <= x) a = c; else break; }
-    return a ? a[1] + (x - a[0]) : x;
-  };
-  return { xs, gaps, width, real };
-}
-
 // How long a gap was, as a short label: "20 s", "17 min", "3 h", "2 d".
 export function gapText(ms) {
   if (ms < 59_500) return `${Math.max(1, Math.round(ms / 1000))} s`;
@@ -117,27 +67,6 @@ export function gapText(ms) {
   if (min < 60) return `${min} min`;
   const h = Math.round(ms / 3_600_000);
   return h < 24 ? `${h} h` : `${Math.round(ms / 86_400_000)} d`;
-}
-
-// Readings [{t, v}] (oldest first) packed onto a chart of span positions, k = 0 newest: time with no
-// readings takes no room. Breaks come only from the readings' own times, so they don't change as the
-// clock moves; time since the newest reading is one too (k -1) once it passes maxGapMs.
-// {at: value per k (NaN none), ts: its readings' mean time (ms), breaks: [{k, ms}] newest first, k the position just newer than the break}.
-export function timeChart(points, now, maxGapMs, span) {
-  const at = new Float64Array(span).fill(NaN), breaks = [];
-  if (!points.length) return { at, ts: new Float64Array(span).fill(NaN), breaks };
-  let active = 0;
-  for (let i = 1; i < points.length; i++) { const d = points[i].t - points[i - 1].t; if (d <= maxGapMs) active += d; }
-  const hop = active / Math.max(1, span - 2), xs = [0];      // a break is one position wide, so the two sides stay apart
-  for (let i = 1; i < points.length; i++) { const d = points[i].t - points[i - 1].t; xs.push(xs[i - 1] + (d > maxGapMs ? hop : d)); }
-  const x1 = xs[xs.length - 1], K = (x) => (x1 > 0 ? Math.round((x1 - x) / x1 * (span - 1)) : 0);
-  const sum = new Float64Array(span), tsum = new Float64Array(span), n = new Uint16Array(span), ts = new Float64Array(span).fill(NaN);
-  points.forEach((p, i) => { const k = K(xs[i]); sum[k] += p.v; tsum[k] += p.t; n[k]++; });
-  for (let k = 0; k < span; k++) if (n[k]) { at[k] = sum[k] / n[k]; ts[k] = tsum[k] / n[k]; }
-  const idle = now - points[points.length - 1].t;
-  if (idle > maxGapMs) breaks.push({ k: -1, ms: idle });
-  for (let i = points.length - 1; i > 0; i--) { const d = points[i].t - points[i - 1].t; if (d > maxGapMs) breaks.push({ k: K(xs[i]), ms: d }); }
-  return { at, ts, breaks };
 }
 
 // How many samples a chart that grows spans: the samples there are, at least least and at most most,

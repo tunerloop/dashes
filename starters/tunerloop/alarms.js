@@ -1,13 +1,12 @@
 // This dash's alarm rules, for the kit's engine and banner (kit/alarms.js, kit/alarm_banner.js). The
 // temperature alarms sit at the starts of their channels' red and warn zones (ranges.js: the same
 // lines the dials draw), so moving a zone moves its alarm. Values are base units.
-import { CHANNELS } from './kit/channels.js';
+import { CHANNELS, num } from './kit/channels.js';
 import { leanest } from './kit/alarms.js';
 import { oilMin } from './kit/oil.js';
 import { LAMBDA_PARKED } from './ranges.js';
 
 const running = (r) => (r.rpm ?? 0) > 400;
-const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 const lean = (r) => leanest(r, LAMBDA_PARKED);
 
 // A temperature's red and amber alarms, each clearing `back` degrees below.

@@ -6,4 +6,3 @@
 let env = { kpaPer1000: 69, flatFrom: 5000, band: 150 };
 export function useOil(o) { env = { ...env, ...o }; }
 export const oilMin = (rpm) => env.kpaPer1000 * Math.min(Math.max(rpm, 0), env.flatFrom) / 1000;
-export const oilTop = (rpm) => oilMin(rpm) * 2 + env.band;

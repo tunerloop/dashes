@@ -6,8 +6,8 @@
 // banner and are spoken; amber ones show in a strip (alarm_banner.js). Values are base units.
 // The rules are a dash's own (the built-in dash's alarms.js): { id, sev: 'red'|'warn', key (the channel
 // the banner quotes), text, holdMs, on(r), off(r) }.
+import { num } from './channels.js';
 
-const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 // The leaner bank's error against the target (0.05 = 5 % lean), or null without readings. max: a
 // wideband reading at or past it is a parked controller, not a mixture.
 export function leanest(r, max = Infinity) {

@@ -3,11 +3,10 @@
 // and the Pull view the Hard acceleration mode shows (RPM, speed and the 0-60 / 50-70 timer from
 // runs.js). They take the whole reading, which the app's Car tab (js/dash/car_tab.js) extends with speed_kmh, g_lat, g_long and
 // run (the timer state). Colours come from the theme (themes.css --d-*).
-import { CHANNELS, shown } from './channels.js';
+import { CHANNELS, shown, num } from './channels.js';
 import { steadyText } from './steady.js';
 import { prep } from './kit.js';
 
-const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 
 export function makeG() {
   const el = document.createElement('div');

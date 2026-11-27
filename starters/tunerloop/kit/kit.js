@@ -166,12 +166,6 @@ export function trace(g, T, x, y, w, h, o) {
   return { P };
 }
 
-// A tall box split into two charts stacked one over the other, so neither stretches: [{y, h}, {y, h}].
-export function twoCharts(top, bottom, gap) {
-  const h = (bottom - top - gap) / 2;
-  return [{ y: top, h }, { y: top + h + gap, h }];
-}
-
 // Coloured name swatches across the top of a chart.
 export function legend(g, T, items, x, y, fs) {
   for (const [name, color] of items) {

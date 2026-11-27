@@ -6,7 +6,8 @@
 // are in the chosen display units (units.js); a units change rebuilds the boxes (the dash builds its panels again).
 import { CHANNELS, zoneOf, reading, shown, maxChars } from './channels.js';
 import { icon } from './icons.js';
-import { steadyText, holdAngle } from './steady.js';
+import { steadyText, holdAngle, ease } from './steady.js';
+import { esc, f1 } from './html.js';
 import { VDO_DIGITS } from './vdo-digits.js';
 import { drawRecent, drawGlanceView } from './trend_views.js';
 import { drawMixCompass, drawGCompass } from './compass_views.js';
@@ -17,7 +18,6 @@ let lightAt = -35;
 export const setLightAt = (deg) => { lightAt = deg; };
 const SWEEP = 135;                                   // degrees either side of straight up
 const pt = (r, a) => [r * Math.sin(a * Math.PI / 180), -r * Math.cos(a * Math.PI / 180)];
-const f1 = (n) => n.toFixed(1);
 // A dial number in the traced VDO digits, centred on (x, y) like the font's .num text: shown by the
 // Vintage styles instead of the font (boxes.css). null when a character has no traced digit.
 const DIGIT_H = 11.5, DIGIT_GAP = 0.13;                // height in dial units; gap in digit heights
@@ -34,16 +34,12 @@ function vdoNumber(label, x, y) {
   const paths = ds.map((g) => { const p = `<path transform="translate(${at} 0)" d="${g.d}"/>`; at += g.w + gap; return p; }).join('');
   return `<g transform="translate(${f1(x - w * s / 2)} ${f1(y - H / 2)}) scale(${s})">${paths}</g>`;
 }
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 function arc(r, a0, a1) {
   const [x0, y0] = pt(r, a0), [x1, y1] = pt(r, a1);
   return `M${f1(x0)} ${f1(y0)}A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${f1(x1)} ${f1(y1)}`;
 }
 
-// Smoothing: the shown value closes most of the gap to the target in about 3 x tauMs (0.2 s for the
-// hub's 5 readings a second; Direct's 20 a second need far less, config.directSmoothMs).
-const ease = (cur, target, dtMs, tauMs = 70) => (cur === null || tauMs <= 0 ? target : cur + (target - cur) * (1 - Math.exp(-dtMs / tauMs)));
 
 // Where a dial's numbers go: every step (the channel's dial step, display units), with three small
 // ticks between numbers, one at halfway (Steve, 2026-11-27: three at least, an odd number; a dash's

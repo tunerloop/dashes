@@ -52,6 +52,9 @@ export function useChannels(ranges) {
   }
 }
 
+// A finite number, or null: anything else a reading's field might hold counts as no reading.
+export const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
+
 // A reading as a number, or null when there is none or it is outside the channel's valid range.
 export function reading(ch, v) {
   if (typeof v !== 'number' || !Number.isFinite(v) ) return null;
@@ -106,9 +109,3 @@ export function shown(ch, choices) {
   };
 }
 
-// The live chart (the last minute, 5 readings a second) and the trend chart (2 hours of
-// heartbeats). axis 'l' or 'r'. split: which series go in each of the two charts when held upright.
-export const CHARTS = {
-  live: { title: 'Last minute', series: [['rpm', 'l', 'rpm'], ['tps_pct', 'r', 'tps'], ['map_kpa', 'r', 'map']], split: [[0], [1, 2]] },
-  trend: { title: 'Last 2 hours', series: [['ect_c', 'l', 'ect'], ['iat_c', 'l', 'iat'], ['oil_temp_c', 'l', 'oil']], split: [[0, 2], [1]] },
-};

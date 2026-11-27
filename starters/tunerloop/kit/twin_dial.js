@@ -9,13 +9,11 @@
 // colour their ticks. On overrun (fuel cut, the widebands read air) a bank's LCD says CUT. It draws in
 // the dials' own classes (boxes.css, themes.css), so every gauge style dresses it like the others.
 import { CHANNELS, shown, reading } from './channels.js';
-import { steadyText, holdAngle } from './steady.js';
+import { steadyText, holdAngle, ease } from './steady.js';
+import { esc, f1 } from './html.js';
 import { overrun } from './hist.js';
 
 const LO = 0.7, HI = 1.3, SWEEP = 116, FROM = 148, R = 70, P = 22;   // FROM: rich's angle off straight up
-const f1 = (n) => n.toFixed(1);
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const ease = (cur, target, dtMs, tauMs = 70) => (cur === null || tauMs <= 0 ? target : cur + (target - cur) * (1 - Math.exp(-dtMs / tauMs)));
 
 // A bank's needle angle (degrees, 0 straight up, clockwise) for a lambda: side -1 left, 1 right.
 export function twinAngle(side, v) {
@@ -45,7 +43,7 @@ export function makeTwinDial() {
   el.className = 'box gauge twin-dial';
   el.innerHTML = `<svg viewBox="-100 -100 200 200" role="img" aria-label="Lambda, both banks">
     <circle class="face" r="97"/><circle class="lip" r="100" clip-path="url(#d3-faceclip)" filter="url(#d3-blur)"/><circle class="ring" r="97"/>
-    <g class="print">${print}<text class="lbl" y="34">${esc((ch.word || 'Lambda').toUpperCase())}</text></g>
+    <g class="print">${print}<text class="lbl" y="34">${esc(ch.label.replace(/ \d+$/, '').toUpperCase())}</text></g>
     ${bug(-1)}${bug(1)}${lcd(-76, '1-3', -1)}${lcd(51, '4-6', 1)}${needle(-1)}${needle(1)}
     <circle class="glass" r="93"/></svg>`;
   const parts = [-1, 1].map((s, i) => ({
@@ -62,7 +60,7 @@ export function makeTwinDial() {
     },
     frame(dt, tauMs) {
       for (const p of parts) {
-        const t = cut ? 'CUT' : p.raw === null ? '-' : p.steady(ch.value(p.raw));
+        const t = cut ? 'CUT' : p.raw === null ? '-' : p.steady(p.raw);   // steadyText takes the reading in base units
         if (t !== p.text) { p.v.textContent = t; p.text = t; }
         p.needle.style.display = p.raw === null || cut ? 'none' : '';
         if (p.raw === null || cut) { p.cur = null; continue; }

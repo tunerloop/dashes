@@ -1,7 +1,7 @@
 {
   "id": "my-tunerloop-dash",
   "name": "My TunerLoop dash",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "api": 1,
   "author": "TunerLoop",
   "license": "MIT",
@@ -19,6 +19,6 @@
   ],
   "basedOn": {
     "id": "tunerloop-dash",
-    "version": "1.0.13"
+    "version": "1.0.14"
   }
 }

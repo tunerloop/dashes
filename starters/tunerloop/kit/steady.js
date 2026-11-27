@@ -43,3 +43,7 @@ export function steadyText(ch, opts = {}) {
     return x === null ? '-' : x.toFixed(ch.dp);
   };
 }
+
+// Smoothing: the shown value closes most of the gap to the target in about 3 x tauMs (0.2 s for the
+// hub's 5 readings a second; Direct's 20 a second need far less). The dials' needles move by it.
+export const ease = (cur, target, dtMs, tauMs = 70) => (cur === null || tauMs <= 0 ? target : cur + (target - cur) * (1 - Math.exp(-dtMs / tauMs)));

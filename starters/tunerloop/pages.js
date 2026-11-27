@@ -11,39 +11,27 @@ import { WHOLE } from './box_list.js';
 import { makeBox } from './boxes.js';
 
 const GLANCES = [['recent', 'Last 15 min'], ['today', 'Today'], ['days', 'Last 30 days']];
+const GRID_PAGE = 9;   // All numbers: 3 by 3 a panel page (Steve, 2026-11-27)
+const panel = (kind, name, more = {}) => ({ where: 'panel', kind, level: null, name, ...more });
+const full = (kind, name, level, more = {}) => ({ where: 'full', kind, level, name, ...more });
 
-// [{ where: 'panel'|'full', kind: 'box'|'graphs', level, view?, name }] for a box spec.
-export function pageList(spec) {
-  if (spec.kind === 'g') {   // the G meter, then its compass (kit/compass_views.js), in a panel and full screen
-    return [
-      { where: 'panel', kind: 'box', level: null, name: 'G meter' },
-      { where: 'panel', kind: 'graphs', level: null, view: 'g', name: 'Compass' },
-      { where: 'full', kind: 'graphs', level: 0, view: 'g', name: 'Compass' },
-    ];
-  }
-  if (spec.kind === 'twindial' || ((spec.kind === 'big' || spec.kind === 'gauge') && CHANNELS[spec.key]?.vdo)) {   // a VDO dial: oil temp's row of pages
-    const glances = CHANNELS[spec.key].phone ? GLANCES.slice(0, 1) : GLANCES;   // the hub keeps no history of the phone's own readings
-    return [
-      { where: 'panel', kind: 'box', level: null, name: 'Dial' },
-      ...(spec.kind === 'twindial' ? [{ where: 'panel', kind: 'graphs', level: null, view: 'mix', name: 'Compass' }] : []),   // the banks' compass second
-      { where: 'panel', kind: 'graphs', level: null, view: 'recent', name: 'Graphs' },
-      ...glances.map(([view, name], level) => ({ where: 'full', kind: 'graphs', level, view, name })),
-    ];
-  }
-  if (spec.kind === 'grid' && spec.keys?.length > GRID_PAGE) {   // All numbers: 3 by 3 a panel page, every one full screen
+// Each kind of row (box_list.js row), from a box spec: [{ where, kind: 'box'|'graphs', level, view?, keys?, name }].
+const ROWS = {
+  dial: (spec) => [   // the hub keeps no history of the phone's own readings, so speed has only its 15 minutes
+    panel('box', 'Dial'),
+    ...(spec.compass ? [panel('graphs', 'Compass', { view: spec.compass })] : []),
+    panel('graphs', 'Graphs', { view: 'recent' }),
+    ...GLANCES.slice(0, CHANNELS[spec.key]?.phone ? 1 : GLANCES.length).map(([view, name], level) => full('graphs', name, level, { view })),
+  ],
+  g: () => [panel('box', 'G meter'), panel('graphs', 'Compass', { view: 'g' }), full('graphs', 'Compass', 0, { view: 'g' })],
+  grid: (spec) => {
     const parts = [];
     for (let i = 0; i < spec.keys.length; i += GRID_PAGE) parts.push(spec.keys.slice(i, i + GRID_PAGE));
-    return [
-      ...parts.map((keys, i) => ({ where: 'panel', kind: 'box', level: null, name: `${spec.name} ${i + 1}`, keys })),
-      { where: 'full', kind: 'box', level: 0, name: spec.name, keys: spec.keys },
-    ];
-  }
-  return [
-    { where: 'panel', kind: 'box', level: null, name: spec.name || '' },
-    { where: 'full', kind: 'box', level: 0, name: spec.name || '' },
-  ];
-}
-const GRID_PAGE = 9;
+    return [...parts.map((keys, i) => panel('box', parts.length > 1 ? `${spec.name} ${i + 1}` : spec.name, { keys })), full('box', spec.name, 0, { keys: spec.keys })];
+  },
+  one: (spec) => [panel('box', spec.name || ''), full('box', spec.name || '', 0)],
+};
+export const pageList = (spec) => (ROWS[spec.row] || ROWS.one)(spec);
 
 // Hand a box its share of this frame's readings. ctx: { value, dt, smoothMs }.
 export function feed(box, spec, ctx) {

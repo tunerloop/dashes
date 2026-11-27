@@ -12,7 +12,7 @@
 import { hist, FAST_HZ } from './hist.js';
 import { CHANNELS } from './channels.js';
 import { prep, themeOf, typeScale, font, text, line, signed } from './kit.js';
-import { glanceHead } from './trend_views.js';
+import { glanceHead } from './glance_frame.js';
 
 const F = hist.fast, clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
