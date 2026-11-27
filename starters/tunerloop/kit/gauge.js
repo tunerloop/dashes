@@ -49,15 +49,17 @@ const ease = (cur, target, dtMs, tauMs = 70) => (cur === null || tauMs <= 0 ? ta
 // ticks between numbers, one at halfway (Steve, 2026-11-27: three at least, an odd number; a dash's
 // dial.steps overrides for an exception). A face has
 // room for about 21 characters of numbers round it: past that it numbers every other long tick (km/h
-// every 40, kPa every 200; mph, psi, deg F and the tach keep every step).
+// every 40, kPa every 200; mph, psi, deg F and the tach keep every step). top: where the face ends, its
+// last number (the scale's end rounded up to one: kPa's 700 to 800).
 export const DIAL_CHARS = 21;   // mph to 160 (21) keeps every 20; kPa (22) and km/h double up
 
-// A dial's zones (display units), a zone that runs to the end of the channel's scale running to the
-// end of the dial too: the dial rounds its ends out to whole numbers (deg F: 176 shows as 180), and
-// the last tick belongs in the zone (Steve, 2026-11-27: IAT's 180 red). base: the channel; ch: shown.
-export function dialZones(base, ch) {
+// A dial's zones (display units) on its face from min to top: a zone reaching the end of the
+// channel's scale, or past it (the dash's ranges end top zones at 999, Steve 2026-11-27), runs to the
+// end of the dial, since the dial rounds its ends out to whole numbers (deg F: 176 shows as 180) and
+// the last tick belongs in the zone. base: the channel; ch: shown; top: the dial's end.
+export function dialZones(base, ch, top = ch.max) {
   const lo = ch.value(base.min), hi = ch.value(base.max), eps = 1e-6;
-  const fit = (zs) => (zs || []).map(([a, b]) => [Math.abs(a - lo) < eps ? Math.min(a, ch.min) : a, Math.abs(b - hi) < eps ? Math.max(b, ch.max) : b]);
+  const fit = (zs) => (zs || []).map(([a, b]) => [a <= lo + eps ? ch.min : Math.max(a, ch.min), b >= hi - eps ? top : Math.min(b, top)]).filter(([a, b]) => b > a);
   return { cold: fit(ch.cold), warn: fit(ch.warn), red: fit(ch.red) };
 }
 export const DIAL_STEPS = 4;
@@ -66,20 +68,21 @@ export function dialNumbers(ch) {
   let { step } = ch.dial, chars = 0;
   for (let i = 0, v = ch.min; v <= ch.max + 1e-9; i++, v = ch.min + i * step) chars += String(+(v / scale).toFixed(2)).length;
   if (chars > DIAL_CHARS) step *= 2;
-  return { step, steps: ch.dial.steps ?? DIAL_STEPS };
+  const top = +(ch.min + Math.ceil((ch.max - ch.min) / step - 1e-9) * step).toPrecision(9);
+  return { step, steps: ch.dial.steps ?? DIAL_STEPS, top };
 }
 
 export function makeGauge(key) {
   const base = CHANNELS[key];
   const ch = shown(base);
-  const ang = (v) => -SWEEP + (Math.min(ch.max, Math.max(ch.min, v)) - ch.min) / (ch.max - ch.min) * 2 * SWEEP;
-  const { step, steps } = dialNumbers(ch), { scale } = ch.dial;
+  const { step, steps, top } = dialNumbers(ch), { scale } = ch.dial;
+  const ang = (v) => -SWEEP + (Math.min(top, Math.max(ch.min, v)) - ch.min) / (top - ch.min) * 2 * SWEEP;
   const note = ch.dial.note || ch.note;            // x1000 on the tach; which cylinders on a lambda dial
   let ticks = '', nums = '', vdo = '';
-  const Z = dialZones(base, ch), within = (zs, v) => (zs || []).some(([lo, hi]) => v >= lo - 1e-9 && v <= hi + 1e-9);
+  const Z = dialZones(base, ch, top), within = (zs, v) => (zs || []).some(([lo, hi]) => v >= lo - 1e-9 && v <= hi + 1e-9);
   const inZone = (v) => within(Z.warn, v) || within(Z.red, v);
   const minor = step / steps;
-  for (let i = 0, v = ch.min; v <= ch.max + 1e-9; i++, v = ch.min + i * minor) {
+  for (let i = 0, v = ch.min; v <= top + 1e-9; i++, v = ch.min + i * minor) {
     const major = i % steps === 0;
     // minor ticks are drawn 12 long; each theme shows as much of a tick as it wants (stroke-dasharray, boxes.css)
     const [x0, y0] = pt(88, ang(v)), [x1, y1] = pt(major ? 73 : 76, ang(v));
